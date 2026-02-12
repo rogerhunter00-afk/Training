@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Start</title><link rel="stylesheet" href="assets/styles.css"></head>
+<body><div id="app"></div><script src="assets/app.js"></script><script>
+const { initLayout, loadState, updateState, COURSE_TITLE } = window.ALSApp;
+const main = initLayout('Start / Resume');
+const state = loadState();
+const hasName = !!state.learner.name;
+main.innerHTML = `<section class="card"><h2>${COURSE_TITLE}</h2>
+<p>Estimated duration: 35–55 minutes.</p>
+<p>Pass mark: 80% on final quiz. Critical questions Q4 and Q7 must be correct.</p>
+<form id="startForm">
+<label>Full name (required)<input type="text" id="fullName" required value="${state.learner.name || ''}"></label>
+<div class="nav-buttons"><button class="btn" type="submit">${hasName?'Resume':'Start'} course</button><a href="quiz.html" class="btn secondary">Go to final assessment</a></div>
+</form></section>`;
+main.querySelector('#startForm').addEventListener('submit',(e)=>{
+ e.preventDefault(); const name = main.querySelector('#fullName').value.trim(); if(!name){alert('Name required.');return;}
+ updateState(s=>{s.learner.name=name; s.learner.createdAtISO ||= new Date().toISOString(); s.course.startedAtISO ||= new Date().toISOString();});
+ location.href='course.html';
+});
+</script></body></html>
