@@ -290,6 +290,18 @@
       {id:'h6', name:'Loose plug with discoloration', x:290, y:120}
     ];
     const found = new Set();
+    const hazardPhotos = [
+      { src:'assets/training-images/co2-extinguisher-outdoor.jpg', alt:'CO2 extinguisher with horn and hose', caption:'Correct extinguisher type for electrical fire response.' },
+      { src:'assets/training-images/co2-extinguisher-wall.jpg', alt:'Wall mounted CO2 extinguisher under sign', caption:'Check clear access and correct signage.' },
+      { src:'assets/training-images/open-distribution-board.jpg', alt:'Open electrical distribution board', caption:'Open panels and exposed internals are a restricted hazard.' },
+      { src:'assets/training-images/flooded-electrical-cabinet.jpg', alt:'Electrical cabinet in flood water', caption:'Water plus electrics: isolate and establish exclusion zone immediately.' },
+      { src:'assets/training-images/consumer-unit-breakers.jpg', alt:'Consumer unit with labelled breakers', caption:'Isolation points must be identified before work starts.' },
+      { src:'assets/training-images/damaged-plug.jpg', alt:'Damaged plug with exposed wiring', caption:'Damaged plugs are immediate remove-from-service defects.' },
+      { src:'assets/training-images/overloaded-extension-strip.jpg', alt:'Overloaded extension strip with many adapters', caption:'Overloaded adaptors increase overheating and fire risk.' },
+      { src:'assets/training-images/high-voltage-warning-sign.jpg', alt:'Danger of death high voltage warning sign', caption:'Warning signs are controls; do not bypass barriers.' },
+      { src:'assets/training-images/high-voltage-triangle.jpg', alt:'Yellow high-voltage hazard triangle symbol', caption:'Recognise the symbol and stop before entry.' }
+    ];
+
     el.innerHTML = conceptPanel({title:'Hazard Heatmap', visual:`<svg viewBox="0 0 620 260" role="img" aria-label="Workshop hazard scene">
       <rect x="10" y="10" width="600" height="240" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
       <rect x="40" y="70" width="180" height="90" fill="#d1fae5"/><rect x="230" y="60" width="130" height="110" fill="#e5e7eb"/><rect x="390" y="45" width="160" height="120" fill="#e2e8f0"/>
@@ -297,7 +309,8 @@
       ${hazards.map(h=>`<circle class="haz-dot" id="dot-${h.id}" cx="${h.x}" cy="${h.y}" r="12" fill="#ef4444" data-id="${h.id}" tabindex="0" role="button" aria-label="Hazard hotspot ${h.name}"/>`).join('')}
       <text x="25" y="240" font-size="12">Tap/click red hotspots or use hazard list.</text></svg>`, explanation:'Find visible warning signs before any electrical task starts.', terms:['Identify and quarantine unsafe equipment.', 'Report defects with clear location details.', 'Never continue work around active hazards.'], tryId:'m3try'});
     const t=el.querySelector('#m3try');
-    t.innerHTML += `<div class="hotspot-list" id="hazardList"></div><p class="feedback" id="hazFb"></p><p class="recap hidden" id="hazRecap">Next action: quarantine affected equipment, prevent use, report to supervisor/maintenance, and record defect details.</p>`;
+    t.innerHTML += `<div class="hotspot-list" id="hazardList"></div><p class="feedback" id="hazFb"></p><p class="recap hidden" id="hazRecap">Next action: quarantine affected equipment, prevent use, report to supervisor/maintenance, and record defect details.</p>
+      <section class="photo-gallery-wrap"><h4>Photo-based hazard recognition</h4><p class="muted">Use these site photos to practise spotting electrical risk indicators.</p><div class="photo-gallery" id="hazardPhotos"></div></section>`;
     const hl=t.querySelector('#hazardList');
     hazards.forEach((h,i)=>hl.insertAdjacentHTML('beforeend',`<button class="btn tiny secondary" data-id="${h.id}">Select hazard ${i+1}: ${h.name}</button>`));
 
@@ -318,6 +331,11 @@
       dot.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); markHazard(dot.dataset.id); } });
     });
     hl.querySelectorAll('button').forEach(b=>b.onclick=()=>markHazard(b.dataset.id));
+
+    const hp = t.querySelector('#hazardPhotos');
+    hazardPhotos.forEach(photo=>{
+      hp.insertAdjacentHTML('beforeend', `<figure class="photo-card"><img src="${photo.src}" alt="${photo.alt}" loading="lazy"><figcaption>${photo.caption}</figcaption></figure>`);
+    });
   }
 
   function energyPathSvg(state){
@@ -391,6 +409,15 @@
 
   function module6(el){
     const report = getInteractionState().m6_report || {};
+    const emergencyPhotos = [
+      { src:'assets/training-images/co2-extinguisher-outdoor.jpg', alt:'CO2 extinguisher', caption:'Use CO₂ on electrical fire only when trained and route is safe.' },
+      { src:'assets/training-images/lockout-hasp-machine.jpg', alt:'Lockout hasp on machine brake', caption:'Lock-out should physically prevent restart during intervention.' },
+      { src:'assets/training-images/lockout-hasp-and-padlock.jpg', alt:'Lockout hasp and padlock set', caption:'One person one lock: never remove another person’s lock.' },
+      { src:'assets/training-images/test-probe.jpg', alt:'Two-pole test probe', caption:'Prove-test-prove requires suitable test equipment.' },
+      { src:'assets/training-images/isolator-internals.jpg', alt:'Internal wiring of switch/isolator', caption:'Internal components are for authorised persons only.' },
+      { src:'assets/training-images/tagged-control-panel.jpg', alt:'Tagged control room panel', caption:'Tags communicate status and prevent unsafe restart.' }
+    ];
+
     el.innerHTML = `<section class="scenario-sim"><h3>Scenario A: Electric shock</h3><p>Worker appears in contact with live equipment.</p>
       <div class="step-choice" data-s="a1"><p>Step 1:</p><button class="btn tiny secondary" data-next="wrong">Touch casualty to pull away</button><button class="btn tiny secondary" data-next="right">Isolate power source if safe</button></div>
       <div class="step-choice hidden" data-s="a2"><p>Step 2:</p><button class="btn tiny secondary" data-next="right">Call emergency help and follow site response</button><button class="btn tiny secondary" data-next="wrong">Resume work and monitor</button></div>
@@ -404,7 +431,8 @@
       <label>Observations<textarea id="rObs">${report.observations||''}</textarea></label>
       <label>Controls applied<textarea id="rCtl">${report.controls||''}</textarea></label>
       <label>Who notified<input type="text" id="rWho" value="${report.notified||''}"></label>
-      <button class="btn" id="buildReport">Generate model report</button><pre id="reportOut" class="report-box"></pre></div></section>`;
+      <button class="btn" id="buildReport">Generate model report</button><pre id="reportOut" class="report-box"></pre></div></section>
+      <section class="photo-gallery-wrap"><h3>Emergency response reference photos</h3><div class="photo-gallery" id="emergencyPhotos"></div></section>`;
 
     const state = {a:false,b:false};
     function wireScenario(prefix){
@@ -434,6 +462,11 @@
       const model = `Electrical Incident Report\nLocation/Asset: ${draft.location || '[add location]'}\nObservations: ${draft.observations || '[add observations]'}\nImmediate controls applied: ${draft.controls || '[add controls]'}\nNotified: ${draft.notified || '[add names/roles]'}\nStatus: Escalated for authorised electrical review.`;
       el.querySelector('#reportOut').textContent = model;
     };
+
+    const ep = el.querySelector('#emergencyPhotos');
+    emergencyPhotos.forEach(photo=>{
+      ep.insertAdjacentHTML('beforeend', `<figure class="photo-card"><img src="${photo.src}" alt="${photo.alt}" loading="lazy"><figcaption>${photo.caption}</figcaption></figure>`);
+    });
   }
 
   if(!loadState().learner.name){ location.href='index.html'; }

@@ -24,3 +24,7 @@ All progress and results are stored in `localStorage` key:
 - No backend required.
 - Works offline after first load.
 - Print styles provided for certificate and sign-off form (A4).
+
+## Training images
+- Hazard and emergency modules now render photo galleries from `assets/training-images/`.
+- Add the supplied site photos using the filenames listed in `assets/training-images/README.md`.
