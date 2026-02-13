@@ -1,5 +1,5 @@
 (function(){
-  const { loadState, updateState, initLayout, moduleTitles } = window.ALSApp;
+  const { loadState, updateState, initLayout, moduleTitles, imageFallback } = window.ALSApp;
   const main = initLayout('Course Modules');
   const total = moduleTitles.length;
 
@@ -391,6 +391,7 @@
     hazardPhotos.forEach(photo=>{
       hp.insertAdjacentHTML('beforeend', `<figure class="photo-card"><img src="${photo.src}" alt="${photo.alt}" loading="lazy"><figcaption>${photo.caption}</figcaption></figure>`);
     });
+    hp.querySelectorAll('img').forEach(img=>img.addEventListener('error', ()=>imageFallback(img), { once:true }));
   }
 
   function energyPathSvg(state){
@@ -522,6 +523,7 @@
     emergencyPhotos.forEach(photo=>{
       ep.insertAdjacentHTML('beforeend', `<figure class="photo-card"><img src="${photo.src}" alt="${photo.alt}" loading="lazy"><figcaption>${photo.caption}</figcaption></figure>`);
     });
+    ep.querySelectorAll('img').forEach(img=>img.addEventListener('error', ()=>imageFallback(img), { once:true }));
   }
 
   if(!loadState().learner.name){ location.href='index.html'; }

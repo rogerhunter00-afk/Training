@@ -111,6 +111,13 @@
     return (state.practicalSignoff.records || []).filter(r=>r.result==='pass').sort((a,b)=>new Date(b.signedAtISO)-new Date(a.signedAtISO))[0] || null;
   }
 
+  function imageFallback(img){
+    const label = img.getAttribute('alt') || 'Training image unavailable';
+    const text = encodeURIComponent(label);
+    img.onerror = null;
+    img.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'><rect width='640' height='360' fill='%23e2e8f0'/><rect x='20' y='20' width='600' height='320' rx='16' fill='%23cbd5e1'/><text x='320' y='158' text-anchor='middle' fill='%231e293b' font-size='28' font-family='Arial,sans-serif'>Image unavailable</text><text x='320' y='198' text-anchor='middle' fill='%231e293b' font-size='20' font-family='Arial,sans-serif'>${text}</text></svg>`;
+  }
+
   function buildNav(state){
     const showMatrix = state.settings.showTrainingMatrixPage;
     return `
@@ -223,6 +230,7 @@
     formatLocal,
     addMonths,
     initLayout,
+    imageFallback,
     getBestAttempt,
     getLatestPassSignoff
   };
