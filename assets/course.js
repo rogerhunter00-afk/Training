@@ -135,7 +135,7 @@
     const tryEl = el.querySelector('#m1try');
     tryEl.innerHTML += `<p>Sort each duty card into the correct column (click card, then assign button).</p>
       <div class="sort-grid" id="dutySort"></div>
-      <div class="assign-controls"><button class="btn tiny" id="assignEmployer">Assign to Employer</button><button class="btn tiny secondary" id="assignEmployee">Assign to Employee</button></div>
+      <div class="assign-controls" role="group" aria-label="Assign selected duty card"><button class="btn tiny" id="assignEmployer">Assign selected card to Employer</button><button class="btn tiny secondary" id="assignEmployee">Assign selected card to Employee</button></div>
       <p class="feedback" id="sortFb"></p>
       <p class="recap hidden" id="m1recap">Recap: Employer controls make safe work possible; employee behaviours keep those controls effective.</p>`;
     const sortEl = tryEl.querySelector('#dutySort');
@@ -210,7 +210,7 @@
     ];
     el.innerHTML = conceptPanel({title:'Competency Ladder', visual:ladderSvg(), explanation:'Authorisation should match competency level. If the task pushes into panel access, live testing, or uncertain conditions, STOP and escalate.', terms:['L0-L1: awareness and basic user checks.', 'L2: trained task-specific isolation activity.', 'L3: specialist electrical work only.'], tryId:'m2try'});
     const tryEl = el.querySelector('#m2try');
-    tryEl.innerHTML += '<div id="scenarioCards" class="scenario-grid"></div><p class="feedback" id="m2fb"></p><p class="recap hidden" id="m2recap">Recap: if the ladder says L3, your safest action is usually Escalate.</p>';
+    tryEl.innerHTML += '<div id="scenarioCards" class="scenario-grid" role="group" aria-label="Competency scenario decisions"></div><p class="feedback" id="m2fb"></p><p class="recap hidden" id="m2recap">Recap: if the ladder says L3, your safest action is usually Escalate.</p>';
     const sc = tryEl.querySelector('#scenarioCards');
     const picked = {};
     scenarios.forEach((s,i)=>{
@@ -415,9 +415,9 @@
     let items=['Isolate','Identify','Prove dead','Re-check','Shut down','Lock off + tag'];
     el.innerHTML = conceptPanel({title:'Safe Isolation Energy Path', visual:`<div id="energyVisual">${energyPathSvg([])}</div>`, explanation:'Isolation is a physical break in the energy path, secured by lock-off and verified by prove-test-prove.', terms:['One person, one lock, own key retained.', 'Prohibition tag required.', 'Never remove another person’s lock.'], tryId:'m4try'}) + `<div class="callout">Common mistakes: relying on labels only; taping over breakers; removing others’ locks.</div>`;
     const t=el.querySelector('#m4try');
-    t.innerHTML += `<h4>Sequence Builder</h4><div id="seq"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p>
-      <h4>Tester check</h4><p>Pick the suitable tester for prove-dead process:</p>
-      <div class="choice-row" id="testerPick"><button class="btn tiny secondary" data-v="wrong">Non-contact pen only</button><button class="btn tiny secondary" data-v="right">Two-pole voltage indicator with proving unit</button><button class="btn tiny secondary" data-v="wrong">Improvised lamp/test screwdriver</button></div><p class="feedback" id="testerFb"></p>`;
+    t.innerHTML += `<fieldset><legend>Sequence Builder</legend><p class="muted">Reorder the steps into the safe isolation sequence.</p><div id="seq" role="group" aria-label="Safe isolation order controls"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p></fieldset>
+      <fieldset><legend>Tester check</legend><p>Pick the suitable tester for prove-dead process:</p>
+      <div class="choice-row" id="testerPick" role="group" aria-label="Tester selection options"><button class="btn tiny secondary" data-v="wrong">Non-contact pen only</button><button class="btn tiny secondary" data-v="right">Two-pole voltage indicator with proving unit</button><button class="btn tiny secondary" data-v="wrong">Improvised lamp/test screwdriver</button></div><p class="feedback" id="testerFb"></p></fieldset>`;
 
     const renderSeq=()=>{
       const seq=el.querySelector('#seq'); seq.innerHTML='';
@@ -453,7 +453,7 @@
       <circle cx="600" cy="80" r="12" fill="#2563eb"/><text x="600" y="110" text-anchor="middle" font-size="12">Review + improve</text></svg>`, explanation:'Compliance is evidenced by a repeated regime, not one-off checks.', terms:['Frequent user checks catch visible defects.', 'Formal inspections verify condition.', 'Records prove follow-through on defects.'], tryId:'m5try'});
     const t=el.querySelector('#m5try');
     const opts=[...correct,'Unlabelled verbal assurances','Photo with no date'];
-    t.innerHTML += '<div class="tile-grid" id="ev"></div><button class="btn" id="evBtn">Choose evidence</button><p class="feedback" id="evFb"></p>';
+    t.innerHTML += '<fieldset><legend>Select all records that form defensible inspection evidence</legend><div class="tile-grid" id="ev" role="group" aria-label="Inspection evidence checklist"></div><button class="btn" id="evBtn">Choose evidence</button><p class="feedback" id="evFb"></p></fieldset>';
     const ev=t.querySelector('#ev'); opts.forEach(o=>ev.insertAdjacentHTML('beforeend',`<label class="tile"><input type="checkbox" value="${o}">${o}</label>`));
     t.querySelector('#evBtn').onclick=()=>{
       const selected=[...ev.querySelectorAll('input:checked')].map(i=>i.value);
@@ -475,12 +475,12 @@
     ];
 
     el.innerHTML = `<section class="scenario-sim"><h3>Scenario A: Electric shock</h3><p>Worker appears in contact with live equipment.</p>
-      <div class="step-choice" data-s="a1"><p>Step 1:</p><button class="btn tiny secondary" data-next="wrong">Touch casualty to pull away</button><button class="btn tiny secondary" data-next="right">Isolate power source if safe</button></div>
-      <div class="step-choice hidden" data-s="a2"><p>Step 2:</p><button class="btn tiny secondary" data-next="right">Call emergency help and follow site response</button><button class="btn tiny secondary" data-next="wrong">Resume work and monitor</button></div>
+      <div class="step-choice" data-s="a1" role="group" aria-label="Scenario A, step 1 response options"><p>Step 1:</p><button class="btn tiny secondary" data-next="wrong">Touch casualty to pull away</button><button class="btn tiny secondary" data-next="right">Isolate power source if safe</button></div>
+      <div class="step-choice hidden" data-s="a2" role="group" aria-label="Scenario A, step 2 response options"><p>Step 2:</p><button class="btn tiny secondary" data-next="right">Call emergency help and follow site response</button><button class="btn tiny secondary" data-next="wrong">Resume work and monitor</button></div>
       <p class="feedback" id="aFb"></p></section>
       <section class="scenario-sim"><h3>Scenario B: Electrical fire</h3><p>Smoke from electrical cabinet.</p>
-      <div class="step-choice" data-s="b1"><p>Step 1:</p><button class="btn tiny secondary" data-next="right">Raise alarm immediately</button><button class="btn tiny secondary" data-next="wrong">Open cabinet to inspect flames</button></div>
-      <div class="step-choice hidden" data-s="b2"><p>Step 2:</p><button class="btn tiny secondary" data-next="right">Isolate if safe; use CO₂ only if trained and safe</button><button class="btn tiny secondary" data-next="wrong">Use water extinguisher on live cabinet</button></div>
+      <div class="step-choice" data-s="b1" role="group" aria-label="Scenario B, step 1 response options"><p>Step 1:</p><button class="btn tiny secondary" data-next="right">Raise alarm immediately</button><button class="btn tiny secondary" data-next="wrong">Open cabinet to inspect flames</button></div>
+      <div class="step-choice hidden" data-s="b2" role="group" aria-label="Scenario B, step 2 response options"><p>Step 2:</p><button class="btn tiny secondary" data-next="right">Isolate if safe; use CO₂ only if trained and safe</button><button class="btn tiny secondary" data-next="wrong">Use water extinguisher on live cabinet</button></div>
       <p class="feedback" id="bFb"></p></section>
       <section class="concept-panel"><div class="try-block"><h4>Report builder</h4>
       <label>Location / asset<input type="text" id="rLoc" value="${report.location||''}"></label>

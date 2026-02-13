@@ -140,6 +140,7 @@
     document.title = `${pageTitle} | ${COURSE_TITLE}`;
     const app = document.querySelector('#app');
     app.insertAdjacentHTML('afterbegin', `
+      <a class="skip-link" href="#mainContent">Skip to main content</a>
       <header class="topbar">
         <div>
           <h1>${COURSE_TITLE}</h1>
@@ -174,15 +175,84 @@
 
     const navToggle = app.querySelector('.nav-toggle');
     const sidebar = app.querySelector('#sidebarNav');
+    const firstNavLink = sidebar?.querySelector('a');
+    const openMenu = ()=>{
+      navToggle?.setAttribute('aria-expanded', 'true');
+      sidebar?.classList.add('open');
+      firstNavLink?.focus();
+    };
+    const closeMenu = ()=>{
+      navToggle?.setAttribute('aria-expanded', 'false');
+      sidebar?.classList.remove('open');
+    };
+
     navToggle?.addEventListener('click', ()=>{
       const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-      navToggle.setAttribute('aria-expanded', String(!expanded));
-      sidebar.classList.toggle('open');
+      if(expanded) closeMenu();
+      else openMenu();
+    });
+
+    document.addEventListener('click', (event)=>{
+      if(!sidebar?.classList.contains('open')) return;
+      if(sidebar.contains(event.target) || navToggle?.contains(event.target)) return;
+      closeMenu();
+    });
+
+    document.addEventListener('keydown', (event)=>{
+      if(event.key==='Escape' && sidebar?.classList.contains('open')){
+        closeMenu();
+        navToggle?.focus();
+      }
     });
 
     const settingsModal = app.querySelector('#settingsModal');
-    app.querySelector('#settingsBtn')?.addEventListener('click',()=>settingsModal.classList.remove('hidden'));
-    app.querySelector('#closeSettings')?.addEventListener('click',()=>settingsModal.classList.add('hidden'));
+    const settingsBtn = app.querySelector('#settingsBtn');
+    const closeSettingsBtn = app.querySelector('#closeSettings');
+    let lastFocusedBeforeModal = null;
+
+    function openModal(){
+      if(!settingsModal) return;
+      lastFocusedBeforeModal = document.activeElement;
+      settingsModal.classList.remove('hidden');
+      const firstFocusable = settingsModal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      firstFocusable?.focus();
+    }
+
+    function closeModal(){
+      if(!settingsModal) return;
+      settingsModal.classList.add('hidden');
+      const focusTarget = lastFocusedBeforeModal instanceof HTMLElement ? lastFocusedBeforeModal : settingsBtn;
+      focusTarget?.focus();
+    }
+
+    settingsBtn?.addEventListener('click', openModal);
+    closeSettingsBtn?.addEventListener('click', closeModal);
+
+    settingsModal?.addEventListener('click', (event)=>{
+      if(event.target === settingsModal) closeModal();
+    });
+
+    settingsModal?.addEventListener('keydown', (event)=>{
+      if(event.key==='Escape'){
+        closeModal();
+        return;
+      }
+      if(event.key!=='Tab') return;
+
+      const focusables = settingsModal.querySelectorAll('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      const visible = [...focusables].filter(el=>!el.disabled && el.offsetParent !== null);
+      if(!visible.length) return;
+
+      const first = visible[0];
+      const last = visible[visible.length-1];
+      if(event.shiftKey && document.activeElement === first){
+        event.preventDefault();
+        last.focus();
+      } else if(!event.shiftKey && document.activeElement === last){
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     app.querySelector('#settingsForm')?.addEventListener('submit',(e)=>{
       e.preventDefault();
@@ -199,7 +269,7 @@
         s.settings.showTrainingMatrixPage = fd.get('showTrainingMatrixPage') === 'on';
       });
       document.querySelector('#learnerDisplay').textContent = learnerName;
-      settingsModal.classList.add('hidden');
+      closeModal();
     });
 
     app.querySelector('#resetProgress')?.addEventListener('click',()=>{

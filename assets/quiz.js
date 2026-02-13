@@ -51,12 +51,12 @@
         fs.insertAdjacentHTML('beforeend',`<label><input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${k}">${k}: ${v}</label>`);
       });
     } else {
-      const list=document.createElement('div'); list.id='orderQ7';
+      const list=document.createElement('div'); list.id='orderQ7'; list.setAttribute('role','group'); list.setAttribute('aria-label','Reorder safe isolation steps');
       const renderOrder=()=>{
         list.innerHTML='';
         orderState.forEach((item,i)=>{
           const row=document.createElement('div'); row.className='order-row';
-          row.innerHTML=`<span>${i+1}. ${item}</span><span><button type="button" class="btn tiny" data-up="${i}" ${i===0?'disabled':''}>↑</button><button type="button" class="btn tiny" data-down="${i}" ${i===orderState.length-1?'disabled':''}>↓</button></span>`;
+          row.innerHTML=`<span>${i+1}. ${item}</span><span><button type="button" class="btn tiny" data-up="${i}" aria-label="Move ${item} up" ${i===0?'disabled':''}>↑</button><button type="button" class="btn tiny" data-down="${i}" aria-label="Move ${item} down" ${i===orderState.length-1?'disabled':''}>↓</button></span>`;
           list.append(row);
         });
         list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.up; [orderState[i-1],orderState[i]]=[orderState[i],orderState[i-1]]; renderOrder();});
