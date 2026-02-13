@@ -55,3 +55,15 @@ label{display:block;margin:.45rem 0} input[type=text],input[type=number],textare
 .photo-card img{display:block;width:100%;height:160px;object-fit:cover;background:#f1f5f9}
 .photo-card figcaption{padding:.55rem;font-size:.88rem;color:#334155}
 @media (max-width:900px){.concept-panel{grid-template-columns:1fr}}
+
+.quiz-progress-head{display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap}
+.quiz-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.4rem;margin:.75rem 0}
+.idx-chip{border:1px solid #cbd5e1;background:#fff;border-radius:.35rem;padding:.35rem .45rem;text-align:left;cursor:pointer}
+.idx-chip.done{border-color:#15803d;background:#f0fdf4}
+.idx-chip.todo{border-color:#f59e0b;background:#fffbeb}
+.q-state{font-size:.78rem;padding:.1rem .35rem;border-radius:999px;margin-left:.4rem;vertical-align:middle}
+.q-state.done{background:#dcfce7;color:#166534}
+.q-state.todo{background:#fef3c7;color:#92400e}
+.quiz-result ul{padding-left:1.1rem}
+.quiz-sticky-submit{position:sticky;bottom:0;background:linear-gradient(180deg, rgba(245,247,251,0), rgba(245,247,251,.95) 35%);padding:.8rem 0 .2rem;margin-top:.5rem}
+.quiz-sticky-submit .btn{width:100%}

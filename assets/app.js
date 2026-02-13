@@ -35,7 +35,7 @@
         startedAtISO: '',
         completedAtISO: ''
       },
-      quiz: { attempts: [], bestAttemptId: '' },
+      quiz: { attempts: [], bestAttemptId: '', currentAttempt: { attemptId: '', startedAtISO: '', answers: {} } },
       practicalSignoff: { required: false, records: [] }
     };
   }
@@ -49,8 +49,10 @@
       ? moduleTitles.map((_, i) => Boolean(next.course.moduleCompletion[i]))
       : new Array(moduleTitles.length).fill(false);
     next.course.moduleInteractions = next.course.moduleInteractions || {};
-    next.quiz = { attempts: [], bestAttemptId: '', ...(incoming?.quiz || {}) };
+    next.quiz = { attempts: [], bestAttemptId: '', currentAttempt: { attemptId: '', startedAtISO: '', answers: {} }, ...(incoming?.quiz || {}) };
     next.quiz.attempts = Array.isArray(next.quiz.attempts) ? next.quiz.attempts : [];
+    next.quiz.currentAttempt = { attemptId: '', startedAtISO: '', answers: {}, ...(next.quiz.currentAttempt || {}) };
+    next.quiz.currentAttempt.answers = next.quiz.currentAttempt.answers && typeof next.quiz.currentAttempt.answers === 'object' ? next.quiz.currentAttempt.answers : {};
     next.practicalSignoff = {
       required: Boolean(incoming?.practicalSignoff?.required || next.settings.requirePracticalSignoffForCertificate),
       records: Array.isArray(incoming?.practicalSignoff?.records) ? incoming.practicalSignoff.records : []
