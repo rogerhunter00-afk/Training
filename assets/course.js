@@ -317,23 +317,21 @@
       { src:'assets/training-images/high-voltage-warning-sign.jpg', alt:'Danger of death high voltage warning sign', caption:'Warning signs are controls; do not bypass barriers.' },
       { src:'assets/training-images/high-voltage-triangle.jpg', alt:'Yellow high-voltage hazard triangle symbol', caption:'Recognise the symbol and stop before entry.' }
     ];
+    const placements = {};
 
     el.innerHTML = conceptPanel({title:'Hazard Heatmap', visual:`<svg viewBox="0 0 620 260" role="img" aria-label="Workshop hazard scene">
       <rect x="10" y="10" width="600" height="240" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
       <rect x="40" y="70" width="180" height="90" fill="#d1fae5"/><rect x="230" y="60" width="130" height="110" fill="#e5e7eb"/><rect x="390" y="45" width="160" height="120" fill="#e2e8f0"/>
       <circle cx="250" cy="175" r="30" fill="#bfdbfe" opacity="0.65"/>
-      ${hazards.map(h=>`<circle class="haz-dot" id="dot-${h.id}" cx="${h.x}" cy="${h.y}" r="12" fill="#ef4444" data-id="${h.id}" tabindex="0" role="button" aria-label="Hazard hotspot ${h.name}"/>`).join('')}
-      <text x="25" y="240" font-size="12">Tap/click red hotspots or use hazard list.</text></svg>`, explanation:'Find visible warning signs before any electrical task starts.', terms:['Identify and quarantine unsafe equipment.', 'Report defects with clear location details.', 'Never continue work around active hazards.'], tryId:'m3try'});
+      ${hazards.map(h=>`<circle class="haz-dropzone" id="dot-${h.id}" cx="${h.x}" cy="${h.y}" r="12" fill="#ef4444" data-id="${h.id}" tabindex="0" role="button" aria-label="Drop zone for ${h.name}"/>`).join('')}
+      <text x="25" y="240" font-size="12">Drag each hazard label onto the matching red marker.</text></svg>`, explanation:'Find visible warning signs before any electrical task starts.', terms:['Identify and quarantine unsafe equipment.', 'Report defects with clear location details.', 'Never continue work around active hazards.'], tryId:'m3try'});
     const t=el.querySelector('#m3try');
-    t.innerHTML += `<div class="hotspot-list" id="hazardList"></div><p class="feedback" id="hazFb"></p><p class="recap hidden" id="hazRecap">Next action: quarantine affected equipment, prevent use, report to supervisor/maintenance, and record defect details.</p>
+    t.innerHTML += `<div class="drag-hazards" id="hazardList"></div><p class="feedback" id="hazFb"></p><p class="recap hidden" id="hazRecap">Next action: quarantine affected equipment, prevent use, report to supervisor/maintenance, and record defect details.</p>
       <section class="photo-gallery-wrap"><h4>Photo-based hazard recognition</h4><p class="muted">Use these site photos to practise spotting electrical risk indicators.</p><div class="photo-gallery" id="hazardPhotos"></div></section>`;
     const hl=t.querySelector('#hazardList');
-    hazards.forEach((h,i)=>hl.insertAdjacentHTML('beforeend',`<button class="btn tiny secondary" data-id="${h.id}">Select hazard ${i+1}: ${h.name}</button>`));
+    hazards.forEach((h,i)=>hl.insertAdjacentHTML('beforeend',`<button class="btn tiny secondary hazard-token" draggable="true" data-id="${h.id}" aria-label="Hazard ${i+1}: ${h.name}">Hazard ${i+1}: ${h.name}</button>`));
 
-    function markHazard(id){
-      found.add(id);
-      const dot = el.querySelector(`#dot-${id}`);
-      if(dot){ dot.classList.add('found'); }
+    function updateProgress(){
       const complete = found.size===hazards.length;
       t.querySelector('#hazFb').textContent = `Found ${found.size}/${hazards.length} hazards.` + (complete ? ' Great spotting. Why this matters: early identification prevents escalation. Common mistake: only checking obvious damage.' : '');
       if(complete){
@@ -342,11 +340,52 @@
       }
     }
 
-    el.querySelectorAll('.haz-dot').forEach(dot=>{
-      dot.addEventListener('click',()=>markHazard(dot.dataset.id));
-      dot.addEventListener('keydown',e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); markHazard(dot.dataset.id); } });
+    function placeHazard(hazardId, dropId){
+      const token = hl.querySelector(`[data-id="${hazardId}"]`);
+      const zone = el.querySelector(`#dot-${dropId}`);
+      if(!token || !zone || token.disabled) return;
+      if(hazardId !== dropId){
+        t.querySelector('#hazFb').textContent = 'Not quite. Match each label to the correct location before continuing.';
+        return;
+      }
+      placements[hazardId] = dropId;
+      found.add(hazardId);
+      token.disabled = true;
+      token.classList.add('placed');
+      token.setAttribute('aria-grabbed','false');
+      zone.classList.add('found');
+      zone.setAttribute('aria-label', `Placed: ${token.textContent}`);
+      updateProgress();
+    }
+
+    hl.querySelectorAll('.hazard-token').forEach(token=>{
+      token.addEventListener('dragstart',e=>{
+        e.dataTransfer.setData('text/plain', token.dataset.id);
+        token.setAttribute('aria-grabbed','true');
+      });
+      token.addEventListener('dragend',()=>token.setAttribute('aria-grabbed','false'));
     });
-    hl.querySelectorAll('button').forEach(b=>b.onclick=()=>markHazard(b.dataset.id));
+
+    el.querySelectorAll('.haz-dropzone').forEach(zone=>{
+      zone.addEventListener('dragover',e=>e.preventDefault());
+      zone.addEventListener('drop',e=>{
+        e.preventDefault();
+        const hazardId = e.dataTransfer.getData('text/plain');
+        placeHazard(hazardId, zone.dataset.id);
+      });
+      zone.addEventListener('click',()=>{
+        const firstRemaining = hazards.find(h=>!placements[h.id]);
+        if(firstRemaining) placeHazard(firstRemaining.id, zone.dataset.id);
+      });
+      zone.addEventListener('keydown',e=>{
+        if(e.key==='Enter' || e.key===' '){
+          e.preventDefault();
+          const firstRemaining = hazards.find(h=>!placements[h.id]);
+          if(firstRemaining) placeHazard(firstRemaining.id, zone.dataset.id);
+        }
+      });
+    });
+    updateProgress();
 
     const hp = t.querySelector('#hazardPhotos');
     hazardPhotos.forEach(photo=>{
