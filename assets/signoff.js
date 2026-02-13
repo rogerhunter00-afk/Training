@@ -1,9 +1,19 @@
 (function(){
-  const { initLayout, loadState, updateState, uuid, formatLocal } = window.ALSApp;
+  const { initLayout, loadState, updateState, uuid, formatLocal, getLatestPassSignoff } = window.ALSApp;
   const main=initLayout('Practical Sign-off');
   const state=loadState();
+  const requireSignoff = state.settings.requirePracticalSignoffForCertificate;
+  const latestPass = getLatestPassSignoff(state);
+  const latestPassSummary = latestPass
+    ? `${formatLocal(latestPass.signedAtISO)} — ${latestPass.learnerName || state.learner.name || 'Learner'} / ${latestPass.supervisorName}`
+    : 'No practical pass sign-off recorded yet.';
 
-  main.innerHTML=`<section class="card print-sheet"><h2>Observed Safe Isolation Sign-off</h2>
+  main.innerHTML=`<section class="card"><h2>Sign-off and certificate journey</h2>
+    <p>${requireSignoff ? 'Practical pass sign-off is required to release the certificate.' : 'Practical pass sign-off is optional for certificate release, but it can still be recorded here.'}</p>
+    <p><strong>Latest practical pass record:</strong> ${latestPassSummary}</p>
+    <div class="nav-buttons"><a class="btn secondary" href="certificate.html">Go to certificate</a></div>
+  </section>
+  <section class="card print-sheet"><h2>Observed Safe Isolation Sign-off</h2>
     <form id="signoffForm">
       <label>Learner name<input name="learnerName" type="text" required value="${state.learner.name || ''}"></label>
       <label>Supervisor name<input name="supervisorName" type="text" required></label>
@@ -26,9 +36,15 @@
       <div class="nav-buttons"><button class="btn" type="submit">Save sign-off</button><button class="btn secondary" type="button" id="printSignoff">Print form</button></div>
     </form>
   </section>
-  <section class="card"><h3>Saved records</h3><ul id="records"></ul></section>`;
+  <section class="card"><h3>Saved records</h3><ul id="records"></ul></section>
+  <section class="card" id="returnCard" hidden>
+    <h3>Sign-off saved</h3>
+    <p>Your record has been stored. Return to the certificate page to continue the learner journey.</p>
+    <div class="nav-buttons"><a class="btn" href="certificate.html">Return to Certificate</a></div>
+  </section>`;
 
   const recordsEl=main.querySelector('#records');
+  const returnCard=main.querySelector('#returnCard');
   function renderRecords(){
     const records=loadState().practicalSignoff.records || [];
     recordsEl.innerHTML = records.length ? records.map(r=>`<li>${formatLocal(r.signedAtISO)} — ${r.learnerName} / ${r.supervisorName} — ${r.result.toUpperCase()}</li>`).join('') : '<li>No records yet.</li>';
@@ -55,6 +71,8 @@
     alert('Sign-off saved.');
     e.target.reset();
     renderRecords();
+    returnCard.hidden = false;
+    returnCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
   main.querySelector('#printSignoff').onclick=()=>window.print();

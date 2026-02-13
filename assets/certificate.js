@@ -47,15 +47,41 @@
     const generatedISO = generated.toISOString();
     const canShow = attempt?.passed && (!requireSignoff || passSignoff);
 
+    const latestPassSummary = passSignoff
+      ? `${formatLocal(passSignoff.signedAtISO)} — ${passSignoff.learnerName || state.learner.name || 'Learner'} / ${passSignoff.supervisorName}`
+      : 'No practical pass sign-off recorded yet.';
+
     if(!attempt){
-      main.innerHTML = '<section class="card"><h2>No quiz attempt found</h2><p>Complete the final assessment first.</p><a class="btn" href="quiz.html">Go to quiz</a></section>';
+      main.innerHTML = `<section class="card"><h2>No quiz attempt found</h2>
+        <p>Complete the final assessment first. ${requireSignoff ? 'This site also requires a practical pass sign-off before a certificate can be issued.' : 'A practical sign-off is optional for certificate issue on this site.'}</p>
+        <div class="nav-buttons"><a class="btn" href="quiz.html">Go to quiz</a>${requireSignoff ? '<a class="btn secondary" href="signoff.html">Open practical sign-off</a>' : ''}</div>
+      </section>`;
       return;
     }
 
+    const courseComplete = Boolean(state.course.completedAtISO);
+    const quizPass = Boolean(attempt?.passed);
+    const practicalPass = Boolean(passSignoff);
+    const practicalStepRequired = requireSignoff;
+
+    const timelineItems = [
+      { label: 'Course complete', complete: courseComplete, detail: courseComplete ? formatLocal(state.course.completedAtISO) : 'Not completed yet.' },
+      { label: 'Quiz pass', complete: quizPass, detail: quizPass ? `Passed (${attempt.score}/20)` : 'Pass the final assessment to continue.' },
+      { label: practicalStepRequired ? 'Practical sign-off (required)' : 'Practical sign-off (optional)', complete: !practicalStepRequired || practicalPass, detail: practicalPass ? latestPassSummary : (practicalStepRequired ? 'Required by current settings before certificate release.' : 'Optional by current settings.') }
+    ];
+
+    const journeyCard = `<section class="card"><h2>Certificate journey</h2>
+      <p>${requireSignoff ? 'Practical sign-off is required for certificate issue on this site.' : 'Practical sign-off is optional for certificate issue on this site.'}</p>
+      <ol>${timelineItems.map(item=>`<li><strong>${item.complete ? '✓' : '○'} ${item.label}</strong><br><small>${item.detail}</small></li>`).join('')}</ol>
+      <p><strong>Latest practical pass record:</strong> ${latestPassSummary}</p>
+      ${attempt.passed && requireSignoff && !passSignoff ? '<div class="nav-buttons"><a class="btn" href="signoff.html">Complete practical sign-off</a></div>' : ''}
+    </section>`;
+
     if(!canShow){
-      main.innerHTML = `<section class="card"><h2>Certificate not yet available</h2>
-        <p>${attempt.passed ? 'Pending practical sign-off (pass record required by settings).' : 'You have not met pass criteria yet.'}</p>
-        <a class="btn" href="${attempt.passed?'signoff.html':'quiz.html'}">${attempt.passed?'Add practical sign-off':'Retake quiz'}</a></section>`;
+      main.innerHTML = `${journeyCard}<section class="card"><h2>Certificate not yet available</h2>
+        <p>${attempt.passed ? 'Your quiz is passed, but certificate release is blocked until a practical pass sign-off is saved.' : 'You have not met quiz pass criteria yet, so certificate release is blocked.'}</p>
+        <div class="nav-buttons"><a class="btn" href="${attempt.passed?'signoff.html':'quiz.html'}">${attempt.passed?'Open practical sign-off':'Retake quiz'}</a>${attempt.passed ? '<a class="btn secondary" href="quiz.html">Review quiz result</a>' : ''}</div>
+      </section>`;
       return;
     }
 
@@ -63,7 +89,7 @@
     const dueISO = addMonths(state.course.completedAtISO || generatedISO, state.settings.refresherMonths);
     const payload = exportData(state, attempt, generatedISO);
 
-    main.innerHTML = `<section class="certificate" id="certArea">
+    main.innerHTML = `${journeyCard}<section class="certificate" id="certArea">
       <h2>Certificate of Completion</h2>
       <p class="cert-pass">PASS</p>
       <p>This certifies that <strong>${state.learner.name}</strong> has completed:</p>
@@ -73,7 +99,7 @@
       <p>Score: <strong>${attempt.score}/20</strong></p>
       <p>Completion ID: <code>${certId}</code></p>
       <p>Refresher due: ${formatLocal(dueISO)}</p>
-      ${passSignoff ? `<p>Practical sign-off: ${passSignoff.supervisorName} (${formatLocal(passSignoff.signedAtISO)})</p>`:''}
+      ${passSignoff ? `<p>Practical sign-off: ${passSignoff.supervisorName} (${formatLocal(passSignoff.signedAtISO)})</p>`:'<p>Practical sign-off: Optional and not recorded.</p>'}
     </section>
     <div class="nav-buttons"><button class="btn" id="printBtn">Print / Save as PDF</button><button class="btn secondary" id="downloadBtn">Download results (JSON)</button></div>`;
 
