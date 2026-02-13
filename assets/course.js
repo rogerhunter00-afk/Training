@@ -18,7 +18,22 @@
   function getState(){ return loadState(); }
   function getInteractionState(){ return getState().course.moduleInteractions || {}; }
   function isDone(key){ return Boolean(getInteractionState()[key]); }
-  function setDone(key,val=true){ updateState(s=>{ s.course.moduleInteractions[key]=val; }); render(); }
+  function updateCompletionUi(requiredKey){
+    const nextBtn = main.querySelector('#nextBtn');
+    if(nextBtn) nextBtn.disabled = !isDone(requiredKey);
+
+    const status = main.querySelector('#moduleStatus');
+    if(status){
+      status.textContent = isDone(requiredKey)
+        ? '✅ Module complete. You can move to the next section.'
+        : 'Complete this module activity to continue.';
+    }
+  }
+
+  function setDone(key,val=true){
+    updateState(s=>{ s.course.moduleInteractions[key]=val; });
+    updateCompletionUi(key);
+  }
   function saveInteraction(key, value){ updateState(s=>{ s.course.moduleInteractions[key] = value; }); }
 
   function render(){
@@ -35,6 +50,7 @@
       <article class="card">
         <h2>${mod.title}</h2>
         <p class="muted">Estimated time: ${mod.duration}</p>
+        <p class="muted" id="moduleStatus">${isDone(mod.required) ? '✅ Module complete. You can move to the next section.' : 'Complete this module activity to continue.'}</p>
         <div id="moduleContent"></div>
         <div class="nav-buttons">
           <button class="btn secondary" id="prevBtn" ${idx===0?'disabled':''}>Previous</button>
