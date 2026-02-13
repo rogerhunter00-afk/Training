@@ -139,6 +139,7 @@
           <p class="subline">Estimated duration: 35–55 minutes</p>
         </div>
         <div class="top-actions">
+          <img class="brand-corner-logo" src="assets/als-logo.svg" alt="Aberdeen Laundry Services logo">
           <p aria-live="polite">Learner: <strong id="learnerDisplay">${state.learner.name || 'Not set'}</strong></p>
           <button id="settingsBtn" class="btn secondary">Settings</button>
         </div>
