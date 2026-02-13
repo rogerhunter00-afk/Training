@@ -3,6 +3,8 @@
   const main = initLayout('Final Assessment');
   if(!loadState().learner.name){ location.href='index.html'; }
 
+  const QUESTIONS_PER_SECTION = 5;
+
   const questions = [
     {id:'Q1',type:'single',text:'HSWA employee duties:',options:{A:'Provide safe systems and training',B:'Take reasonable care and cooperate with safety arrangements',C:'Inspect fixed wiring every year',D:'Only electricians have safety duties'},correct:['B'],exp:'Employees must take reasonable care and cooperate with safety arrangements.'},
     {id:'Q2',type:'single',text:'Live work under EAWR acceptable:',options:{A:'Whenever faster',B:'If under 230V',C:'Only if unreasonable to make dead AND precautions taken',D:'If wear gloves'},correct:['C'],exp:'Dead working is default; live work is rare and tightly controlled.'},
@@ -26,41 +28,164 @@
     {id:'Q20',type:'single',text:'Most important rule:',options:{A:'wear PPE always',B:'if it’s not isolated, it’s live',C:'reset trips twice',D:'never report near misses'},correct:['B'],exp:'Assume live until proven isolated.'}
   ];
 
+  const sections = Array.from({length: Math.ceil(questions.length / QUESTIONS_PER_SECTION)}, (_, i) =>
+    questions.slice(i * QUESTIONS_PER_SECTION, (i + 1) * QUESTIONS_PER_SECTION)
+  );
+
+  let activeSection = 0;
+  let latestResult = null;
   let orderState = [...questions.find(q=>q.id==='Q7').options].sort(()=>Math.random()-0.5);
+
+  function getCurrentAnswers(){
+    return loadState().quiz.currentAttempt?.answers || {};
+  }
+
+  function ensureCurrentAttempt(){
+    const state = loadState();
+    const existing = state.quiz.currentAttempt?.answers || {};
+    if(Object.keys(existing).length){
+      const storedOrder = existing.Q7?.split(' -> ').filter(Boolean);
+      if(storedOrder?.length === questions.find(q=>q.id==='Q7').correct.length){
+        orderState = storedOrder;
+      }
+      return;
+    }
+    updateState(s=>{
+      s.quiz.currentAttempt = {
+        attemptId: uuid('attempt'),
+        startedAtISO: new Date().toISOString(),
+        answers: {}
+      };
+    });
+  }
+
+  function isAnswered(q, answers){
+    const val = answers[q.id] || '';
+    if(q.type === 'multi') return Boolean(val && val.split(',').filter(Boolean).length);
+    return Boolean(String(val).trim());
+  }
+
+  function saveAnswer(questionId, value){
+    updateState(s=>{
+      s.quiz.currentAttempt = s.quiz.currentAttempt || { attemptId: uuid('attempt'), startedAtISO: new Date().toISOString(), answers: {} };
+      s.quiz.currentAttempt.answers = s.quiz.currentAttempt.answers || {};
+      s.quiz.currentAttempt.answers[questionId] = value;
+    });
+  }
+
+  function goToQuestion(questionId){
+    const index = questions.findIndex(q=>q.id===questionId);
+    activeSection = Math.max(0, Math.floor(index / QUESTIONS_PER_SECTION));
+    latestResult = null;
+    render();
+  }
 
   function render(){
     const s = loadState();
-    const attempts=s.quiz.attempts || [];
+    const attempts = s.quiz.attempts || [];
+    const answers = getCurrentAnswers();
+    const unanswered = questions.filter(q=>!isAnswered(q, answers)).length;
+    const activeQuestions = sections[activeSection];
+
     main.innerHTML = `<section class="card"><h2>Final Assessment (20 Questions)</h2>
       <p>Pass mark: 80% (16/20) and critical questions Q4 + Q7 must be correct.</p>
+      <div class="quiz-progress-head">
+        <p><strong>Section ${activeSection+1} of ${sections.length}</strong> (${activeQuestions[0].id}–${activeQuestions[activeQuestions.length-1].id})</p>
+        <p class="muted">Unanswered questions: <strong>${unanswered}</strong></p>
+      </div>
+      <div class="quiz-index" id="quizIndex"></div>
       <form id="quizForm"></form>
-      <button class="btn" id="submitQuiz">Submit assessment</button>
+      <div class="nav-buttons">
+        <button class="btn secondary" type="button" id="backSection" ${activeSection===0?'disabled':''}>Back</button>
+        <button class="btn" type="button" id="nextSection" ${activeSection===sections.length-1?'disabled':''}>Next</button>
+      </div>
+      ${activeSection===sections.length-1 ? `<div class="quiz-sticky-submit"><button class="btn" id="submitQuiz" type="button">Submit assessment</button></div>` : ''}
+      ${latestResult ? renderResultCard(latestResult) : ''}
       <section class="card inset"><h3>Attempt history</h3><ul>${attempts.map(a=>`<li>${new Date(a.submittedAtISO||a.startedAtISO).toLocaleString()} — ${a.score}/20 ${a.passed?'PASS':'FAIL'} ${a.criticalPassed?'':'(critical not met)'}</li>`).join('') || '<li>No attempts yet.</li>'}</ul></section>
     </section>`;
-    const form=main.querySelector('#quizForm');
-    questions.forEach(q=>form.append(renderQuestion(q)));
-    main.querySelector('#submitQuiz').onclick=submit;
+
+    const indexWrap = main.querySelector('#quizIndex');
+    questions.forEach((q, i)=>{
+      const done = isAnswered(q, answers);
+      indexWrap.insertAdjacentHTML('beforeend', `<button type="button" class="idx-chip ${done?'done':'todo'}" data-qid="${q.id}">${i+1}. ${q.id} ${done?'✓':'•'}</button>`);
+    });
+    indexWrap.querySelectorAll('[data-qid]').forEach(btn=>btn.onclick=()=>goToQuestion(btn.dataset.qid));
+
+    const form = main.querySelector('#quizForm');
+    activeQuestions.forEach(q=>form.append(renderQuestion(q, answers)));
+
+    main.querySelector('#backSection').onclick = ()=>{ activeSection = Math.max(0, activeSection - 1); render(); };
+    main.querySelector('#nextSection').onclick = ()=>{ activeSection = Math.min(sections.length - 1, activeSection + 1); render(); };
+    const submitBtn = main.querySelector('#submitQuiz');
+    if(submitBtn) submitBtn.onclick = submit;
+
+    if(latestResult){
+      main.querySelector('#reviewAnswers')?.addEventListener('click', ()=>{
+        const firstMissed = latestResult.missed[0];
+        activeSection = firstMissed ? Math.floor(questions.findIndex(q=>q.id===firstMissed) / QUESTIONS_PER_SECTION) : 0;
+        latestResult = null;
+        render();
+      });
+      main.querySelector('#retakeQuiz')?.addEventListener('click', ()=>{
+        activeSection = 0;
+        latestResult = null;
+        orderState = [...questions.find(q=>q.id==='Q7').options].sort(()=>Math.random()-0.5);
+        updateState(st=>{
+          st.quiz.currentAttempt = { attemptId: uuid('attempt'), startedAtISO: new Date().toISOString(), answers: {} };
+        });
+        render();
+      });
+    }
   }
 
-  function renderQuestion(q){
-    const fs=document.createElement('fieldset');
-    fs.className='card inset';
-    fs.innerHTML=`<legend>${q.id}. ${q.text}${q.critical?' (Critical)':''}</legend>`;
+  function renderQuestion(q, answers){
+    const fs = document.createElement('fieldset');
+    fs.className = 'card inset';
+    const done = isAnswered(q, answers);
+    fs.innerHTML = `<legend>${q.id}. ${q.text}${q.critical?' (Critical)':''} <span class="q-state ${done?'done':'todo'}">${done?'Completed':'Unanswered'}</span></legend>`;
+
     if(q.type==='single' || q.type==='multi'){
+      const selected = (answers[q.id] || '').split(',').filter(Boolean);
       Object.entries(q.options).forEach(([k,v])=>{
-        fs.insertAdjacentHTML('beforeend',`<label><input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${k}">${k}: ${v}</label>`);
+        const checked = selected.includes(k) ? 'checked' : '';
+        fs.insertAdjacentHTML('beforeend', `<label><input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${k}" ${checked}>${k}: ${v}</label>`);
+      });
+      fs.querySelectorAll(`input[name="${q.id}"]`).forEach(input=>{
+        input.addEventListener('change', ()=>{
+          if(q.type==='single'){
+            saveAnswer(q.id, input.value);
+          } else {
+            const values = [...fs.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i=>i.value).sort();
+            saveAnswer(q.id, values.join(','));
+          }
+          render();
+        });
       });
     } else {
-      const list=document.createElement('div'); list.id='orderQ7';
-      const renderOrder=()=>{
-        list.innerHTML='';
-        orderState.forEach((item,i)=>{
-          const row=document.createElement('div'); row.className='order-row';
-          row.innerHTML=`<span>${i+1}. ${item}</span><span><button type="button" class="btn tiny" data-up="${i}" ${i===0?'disabled':''}>↑</button><button type="button" class="btn tiny" data-down="${i}" ${i===orderState.length-1?'disabled':''}>↓</button></span>`;
+      const list = document.createElement('div');
+      list.id = 'orderQ7';
+      const renderOrder = ()=>{
+        list.innerHTML = '';
+        orderState.forEach((item, i)=>{
+          const row = document.createElement('div');
+          row.className = 'order-row';
+          row.innerHTML = `<span>${i+1}. ${item}</span><span><button type="button" class="btn tiny" data-up="${i}" ${i===0?'disabled':''}>↑</button><button type="button" class="btn tiny" data-down="${i}" ${i===orderState.length-1?'disabled':''}>↓</button></span>`;
           list.append(row);
         });
-        list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.up; [orderState[i-1],orderState[i]]=[orderState[i],orderState[i-1]]; renderOrder();});
-        list.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.down; [orderState[i+1],orderState[i]]=[orderState[i],orderState[i+1]]; renderOrder();});
+        list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{
+          const i = +b.dataset.up;
+          [orderState[i-1], orderState[i]] = [orderState[i], orderState[i-1]];
+          saveAnswer(q.id, orderState.join(' -> '));
+          renderOrder();
+          render();
+        });
+        list.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>{
+          const i = +b.dataset.down;
+          [orderState[i+1], orderState[i]] = [orderState[i], orderState[i+1]];
+          saveAnswer(q.id, orderState.join(' -> '));
+          renderOrder();
+          render();
+        });
       };
       renderOrder();
       fs.append(list);
@@ -69,32 +194,31 @@
   }
 
   function submit(){
-    const form=main.querySelector('#quizForm');
-    const answers={};
-    let score=0;
-    const missed=[];
+    const answers = getCurrentAnswers();
+    let score = 0;
+    const missed = [];
     questions.forEach(q=>{
       if(q.type==='single'){
-        const val=form.querySelector(`input[name="${q.id}"]:checked`)?.value || '';
-        answers[q.id]=val;
+        const val = answers[q.id] || '';
         if(val===q.correct[0]) score++; else missed.push(q.id);
       } else if(q.type==='multi'){
-        const vals=[...form.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i=>i.value).sort();
-        answers[q.id]=vals.join(',');
-        const ok=vals.join(',')===q.correct.slice().sort().join(',');
+        const vals = (answers[q.id] || '').split(',').filter(Boolean).sort();
+        const ok = vals.join(',')===q.correct.slice().sort().join(',');
         if(ok) score++; else missed.push(q.id);
       } else {
-        answers[q.id]=orderState.join(' -> ');
-        const ok=orderState.join('|')===q.correct.join('|');
+        const order = (answers[q.id] || '').split(' -> ').filter(Boolean);
+        const ok = order.join('|')===q.correct.join('|');
         if(ok) score++; else missed.push(q.id);
       }
     });
+
     const criticalPassed = !missed.includes('Q4') && !missed.includes('Q7');
     const passed = score>=16 && criticalPassed;
     const now = new Date().toISOString();
+    const existing = loadState().quiz.currentAttempt || {};
     const attempt = {
-      attemptId: uuid('attempt'),
-      startedAtISO: now,
+      attemptId: existing.attemptId || uuid('attempt'),
+      startedAtISO: existing.startedAtISO || now,
       submittedAtISO: now,
       score,
       total: 20,
@@ -103,16 +227,41 @@
       answers,
       missed
     };
+
     updateState(s=>{
       s.quiz.attempts.push(attempt);
       const best=s.quiz.attempts.slice().sort((a,b)=>b.score-a.score)[0];
       s.quiz.bestAttemptId = best?.attemptId || attempt.attemptId;
+      s.quiz.currentAttempt = { attemptId: uuid('attempt'), startedAtISO: now, answers: {} };
       if(passed) s.course.completedAtISO = now;
     });
-    const explanations=questions.filter(q=>missed.includes(q.id)).map(q=>`${q.id}: ${q.exp}`).join('\n');
-    alert(`Score: ${score}/20\n${passed?'PASS':'FAIL'}\nCritical questions passed: ${criticalPassed?'Yes':'No'}\nMissed: ${missed.join(', ') || 'None'}\n\n${explanations}`);
-    if(passed) location.href='certificate.html'; else render();
+
+    latestResult = { ...attempt, explanations: questions.filter(q=>missed.includes(q.id)) };
+    activeSection = sections.length - 1;
+    render();
   }
 
+  function renderResultCard(result){
+    const missedList = result.explanations.length
+      ? `<ul>${result.explanations.map(q=>`<li><strong>${q.id}</strong>: ${q.exp}</li>`).join('')}</ul>`
+      : '<p>Excellent work — no incorrect answers.</p>';
+
+    return `<section class="card inset quiz-result">
+      <h3>Assessment Result</h3>
+      <p><strong>Score:</strong> ${result.score}/${result.total}</p>
+      <p><strong>Status:</strong> ${result.passed ? 'PASS' : 'FAIL'}</p>
+      <p><strong>Critical questions passed:</strong> ${result.criticalPassed ? 'Yes' : 'No'}</p>
+      <h4>Incorrect questions & explanations</h4>
+      ${missedList}
+      <div class="nav-buttons">
+        <button type="button" class="btn secondary" id="reviewAnswers">Review Answers</button>
+        <button type="button" class="btn" id="retakeQuiz">Retake</button>
+        ${result.passed ? '<a class="btn" href="certificate.html">Go to Certificate</a>' : ''}
+      </div>
+    </section>`;
+  }
+
+  ensureCurrentAttempt();
+  saveAnswer('Q7', getCurrentAnswers().Q7 || orderState.join(' -> '));
   render();
 })();
