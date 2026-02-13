@@ -1,5 +1,5 @@
 (function(){
-  const { initLayout, loadState, updateState, uuid } = window.ALSApp;
+  const { initLayout, loadState, updateState, uuid, showToast } = window.ALSApp;
   const main = initLayout('Final Assessment');
   if(!loadState().learner.name){ location.href='index.html'; }
 
@@ -109,8 +109,18 @@
       s.quiz.bestAttemptId = best?.attemptId || attempt.attemptId;
       if(passed) s.course.completedAtISO = now;
     });
-    const explanations=questions.filter(q=>missed.includes(q.id)).map(q=>`${q.id}: ${q.exp}`).join('\n');
-    alert(`Score: ${score}/20\n${passed?'PASS':'FAIL'}\nCritical questions passed: ${criticalPassed?'Yes':'No'}\nMissed: ${missed.join(', ') || 'None'}\n\n${explanations}`);
+    const explanations = questions.filter(q=>missed.includes(q.id)).map(q=>`${q.id}: ${q.exp}`);
+    const summary = [
+      `Score: ${score}/20 — ${passed ? 'PASS' : 'FAIL'}`,
+      `Critical questions passed: ${criticalPassed ? 'Yes' : 'No'}`,
+      `Missed: ${missed.join(', ') || 'None'}`,
+      ...explanations
+    ].join('\n');
+    showToast(summary, {
+      type: passed ? 'info' : 'error',
+      title: 'Assessment result',
+      duration: passed ? 3500 : 8000
+    });
     if(passed) location.href='certificate.html'; else render();
   }
 
