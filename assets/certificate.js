@@ -89,8 +89,8 @@
     const dueISO = addMonths(state.course.completedAtISO || generatedISO, state.settings.refresherMonths);
     const payload = exportData(state, attempt, generatedISO);
 
-    main.innerHTML = `${journeyCard}<section class="certificate" id="certArea">
-      <h2>Certificate of Completion</h2>
+    main.innerHTML = `<section class="certificate" id="certArea">
+      <img class="cert-logo" src="assets/als-logo.svg" alt="Aberdeen Laundry Services logo"><h2>Certificate of Completion</h2>
       <p class="cert-pass">PASS</p>
       <p>This certifies that <strong>${state.learner.name}</strong> has completed:</p>
       <h3>${COURSE_TITLE}</h3>
