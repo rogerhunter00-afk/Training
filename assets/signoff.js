@@ -1,5 +1,5 @@
 (function(){
-  const { initLayout, loadState, updateState, uuid, formatLocal, getLatestPassSignoff } = window.ALSApp;
+  const { initLayout, loadState, updateState, uuid, formatLocal, showToast } = window.ALSApp;
   const main=initLayout('Practical Sign-off');
   const state=loadState();
   const requireSignoff = state.settings.requirePracticalSignoffForCertificate;
@@ -68,7 +68,7 @@
       }
     };
     updateState(s=>{ s.practicalSignoff.records.push(rec); if(!s.learner.name) s.learner.name=rec.learnerName; });
-    alert('Sign-off saved.');
+    showToast('Sign-off saved.');
     e.target.reset();
     renderRecords();
     returnCard.hidden = false;

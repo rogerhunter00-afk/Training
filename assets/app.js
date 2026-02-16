@@ -146,6 +146,31 @@
     img.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'><rect width='640' height='360' fill='%23e2e8f0'/><rect x='20' y='20' width='600' height='320' rx='16' fill='%23cbd5e1'/><text x='320' y='158' text-anchor='middle' fill='%231e293b' font-size='28' font-family='Arial,sans-serif'>Image unavailable</text><text x='320' y='198' text-anchor='middle' fill='%231e293b' font-size='20' font-family='Arial,sans-serif'>${text}</text></svg>`;
   }
 
+  function ensureToastRegion(){
+    let region = document.querySelector('#toastRegion');
+    if(region) return region;
+    region = document.createElement('div');
+    region.id = 'toastRegion';
+    region.className = 'toast-region';
+    region.setAttribute('aria-live', 'polite');
+    region.setAttribute('aria-atomic', 'true');
+    document.body.append(region);
+    return region;
+  }
+
+  function showToast(message, options = {}){
+    const { type = 'info', title = '', duration = 4500 } = options;
+    const region = ensureToastRegion();
+    const toast = document.createElement('section');
+    toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.innerHTML = `${title ? `<strong>${title}</strong>` : ''}<p>${message}</p><button type="button" class="btn tiny secondary" aria-label="Dismiss notification">Dismiss</button>`;
+    const dismiss = ()=>toast.remove();
+    toast.querySelector('button')?.addEventListener('click', dismiss);
+    region.append(toast);
+    if(duration > 0){ setTimeout(dismiss, duration); }
+  }
+
   function buildNav(state){
     const showMatrix = state.settings.showTrainingMatrixPage;
     return `
@@ -168,6 +193,7 @@
     document.title = `${pageTitle} | ${COURSE_TITLE}`;
     const app = document.querySelector('#app');
     app.insertAdjacentHTML('afterbegin', `
+      <a class="skip-link" href="#mainContent">Skip to main content</a>
       <header class="topbar">
         <div>
           <h1>${COURSE_TITLE}</h1>
@@ -199,25 +225,104 @@
             </div>
           </form>
         </div>
+      </div>
+      <div class="modal hidden" id="resetConfirmModal" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle">
+        <div class="modal-card">
+          <h2 id="resetConfirmTitle">Reset progress?</h2>
+          <p>This will delete all module progress, quiz attempts, and sign-off records.</p>
+          <div class="modal-actions">
+            <button type="button" id="confirmReset" class="btn danger">Yes, reset</button>
+            <button type="button" id="cancelReset" class="btn secondary">Cancel</button>
+          </div>
+        </div>
       </div>`);
 
     const navToggle = app.querySelector('.nav-toggle');
     const sidebar = app.querySelector('#sidebarNav');
+    const firstNavLink = sidebar?.querySelector('a');
+    const openMenu = ()=>{
+      navToggle?.setAttribute('aria-expanded', 'true');
+      sidebar?.classList.add('open');
+      firstNavLink?.focus();
+    };
+    const closeMenu = ()=>{
+      navToggle?.setAttribute('aria-expanded', 'false');
+      sidebar?.classList.remove('open');
+    };
+
     navToggle?.addEventListener('click', ()=>{
       const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-      navToggle.setAttribute('aria-expanded', String(!expanded));
-      sidebar.classList.toggle('open');
+      if(expanded) closeMenu();
+      else openMenu();
+    });
+
+    document.addEventListener('click', (event)=>{
+      if(!sidebar?.classList.contains('open')) return;
+      if(sidebar.contains(event.target) || navToggle?.contains(event.target)) return;
+      closeMenu();
+    });
+
+    document.addEventListener('keydown', (event)=>{
+      if(event.key==='Escape' && sidebar?.classList.contains('open')){
+        closeMenu();
+        navToggle?.focus();
+      }
     });
 
     const settingsModal = app.querySelector('#settingsModal');
-    app.querySelector('#settingsBtn')?.addEventListener('click',()=>settingsModal.classList.remove('hidden'));
-    app.querySelector('#closeSettings')?.addEventListener('click',()=>settingsModal.classList.add('hidden'));
+    const settingsBtn = app.querySelector('#settingsBtn');
+    const closeSettingsBtn = app.querySelector('#closeSettings');
+    let lastFocusedBeforeModal = null;
+
+    function openModal(){
+      if(!settingsModal) return;
+      lastFocusedBeforeModal = document.activeElement;
+      settingsModal.classList.remove('hidden');
+      const firstFocusable = settingsModal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      firstFocusable?.focus();
+    }
+
+    function closeModal(){
+      if(!settingsModal) return;
+      settingsModal.classList.add('hidden');
+      const focusTarget = lastFocusedBeforeModal instanceof HTMLElement ? lastFocusedBeforeModal : settingsBtn;
+      focusTarget?.focus();
+    }
+
+    settingsBtn?.addEventListener('click', openModal);
+    closeSettingsBtn?.addEventListener('click', closeModal);
+
+    settingsModal?.addEventListener('click', (event)=>{
+      if(event.target === settingsModal) closeModal();
+    });
+
+    settingsModal?.addEventListener('keydown', (event)=>{
+      if(event.key==='Escape'){
+        closeModal();
+        return;
+      }
+      if(event.key!=='Tab') return;
+
+      const focusables = settingsModal.querySelectorAll('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      const visible = [...focusables].filter(el=>!el.disabled && el.offsetParent !== null);
+      if(!visible.length) return;
+
+      const first = visible[0];
+      const last = visible[visible.length-1];
+      if(event.shiftKey && document.activeElement === first){
+        event.preventDefault();
+        last.focus();
+      } else if(!event.shiftKey && document.activeElement === last){
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     app.querySelector('#settingsForm')?.addEventListener('submit',(e)=>{
       e.preventDefault();
       const fd = new FormData(e.target);
       const learnerName = String(fd.get('learnerName') || '').trim();
-      if(!learnerName){ alert('Learner name is required.'); return; }
+      if(!learnerName){ showToast('Learner name is required.', { type: 'error' }); return; }
       updateState(s=>{
         s.siteName = String(fd.get('siteName') || '').trim();
         s.learner.name = learnerName;
@@ -228,11 +333,14 @@
         s.settings.showTrainingMatrixPage = fd.get('showTrainingMatrixPage') === 'on';
       });
       document.querySelector('#learnerDisplay').textContent = learnerName;
-      settingsModal.classList.add('hidden');
+      closeModal();
     });
 
     app.querySelector('#resetProgress')?.addEventListener('click',()=>{
-      if(!confirm('Reset all progress, quiz attempts, and sign-off records?')) return;
+      openModal(resetConfirmModal);
+    });
+    app.querySelector('#cancelReset')?.addEventListener('click',()=>closeModal(resetConfirmModal));
+    app.querySelector('#confirmReset')?.addEventListener('click',()=>{
       const learner = loadState().learner;
       const fresh = createDefaultState();
       fresh.learner = learner;
@@ -259,6 +367,7 @@
     formatLocal,
     addMonths,
     initLayout,
+    showToast,
     imageFallback,
     getBestAttempt,
     getLatestPassSignoff,
