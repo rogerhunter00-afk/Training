@@ -297,13 +297,33 @@
   }
 
   function module3(el){
-    const hazardChecks = [
-      { id:'h1', name:'Damaged cable sheath', why:'Exposed conductors and insulation damage can lead to electric shock or short-circuit faults.' },
-      { id:'h2', name:'Wet floor near socket', why:'Water lowers resistance and increases shock risk near live equipment.' },
-      { id:'h3', name:'Overloaded plug strip', why:'Overload causes overheating, damaged insulation, and possible fire.' },
-      { id:'h4', name:'Open panel cover', why:'Open electrical enclosures can expose live parts and defeat barriers.' },
-      { id:'h5', name:'Extension lead coiled + warm', why:'Coiled cables can overheat under load and damage insulation.' },
-      { id:'h6', name:'Loose plug with discoloration', why:'Heat marks and poor contact indicate arcing and imminent failure.' }
+    const keyInformation = [
+      { title:'Damaged cable sheath', detail:'Exposed conductors and insulation damage can lead to electric shock or short-circuit faults.' },
+      { title:'Wet floor near socket', detail:'Water lowers resistance and increases shock risk near live equipment.' },
+      { title:'Overloaded plug strip', detail:'Overload causes overheating, damaged insulation, and possible fire.' },
+      { title:'Open panel cover', detail:'Open electrical enclosures can expose live parts and defeat barriers.' },
+      { title:'Extension lead coiled + warm', detail:'Coiled cables can overheat under load and damage insulation.' },
+      { title:'Loose plug with discoloration', detail:'Heat marks and poor contact indicate arcing and imminent failure.' }
+    ];
+    const multipleChoiceQuestions = [
+      {
+        id:'m3q1',
+        question:'What should happen first when a defect is found on equipment that may be live?',
+        choices:['Keep using it and monitor', 'Stop use, isolate area/equipment, and report', 'Wait for scheduled inspection only'],
+        answer:'Stop use, isolate area/equipment, and report'
+      },
+      {
+        id:'m3q2',
+        question:'Why is water near electrical equipment dangerous?',
+        choices:['It helps cool cables', 'It lowers resistance and increases shock risk', 'It only affects battery equipment'],
+        answer:'It lowers resistance and increases shock risk'
+      },
+      {
+        id:'m3q3',
+        question:'What is the main risk from an overloaded plug strip?',
+        choices:['Reduced noise', 'Overheating and potential fire', 'Faster equipment start-up'],
+        answer:'Overheating and potential fire'
+      }
     ];
     const hazardPhotos = [
       { src:'assets/training-images/co2-extinguisher-outdoor.jpg', alt:'CO2 extinguisher with horn and hose', caption:'Correct extinguisher type for electrical fire response.' },
@@ -328,67 +348,58 @@
         <circle cx="450" cy="85" r="9" fill="#ef4444"/><circle cx="185" cy="180" r="9" fill="#ef4444"/><circle cx="290" cy="120" r="9" fill="#ef4444"/>
         <text x="25" y="240" font-size="12">Review the six marked hazard points, then complete the checks below.</text>
       </svg>`,
-      explanation:'Module 3 now uses a simple verification workflow: confirm each hazard and choose the immediate control action.',
+      explanation:'Module 3 now focuses on core hazard information, followed by multiple-choice checks.',
       terms:['Identify defects before work starts.', 'Remove, isolate, or stop use of unsafe items.', 'Report clearly with exact location and condition.'],
       tryId:'m3try'
     });
 
     const t=el.querySelector('#m3try');
     t.innerHTML = `
-      <h4>Step 1: Confirm each hazard</h4>
-      <p class="muted">Tick all six hazards shown in the scene.</p>
-      <div class="drag-hazards" id="hazardChecklist">
-        ${hazardChecks.map((h,i)=>`<label class="tile"><input type="checkbox" value="${h.id}">Hazard ${i+1}: ${h.name}</label>`).join('')}
-      </div>
-      <p class="feedback" id="hazChecklistFb"></p>
+      <h4>Information on the subject</h4>
+      <ul class="info-list">
+        ${keyInformation.map(item=>`<li><strong>${item.title}:</strong> ${item.detail}</li>`).join('')}
+      </ul>
 
-      <h4>Step 2: Choose the first safe action</h4>
-      <p class="muted">When a defect is found on live equipment, what should happen first?</p>
-      <div class="choice-row" id="hazActionChoices">
-        <button class="btn tiny secondary" data-v="wrong">Keep using it and monitor</button>
-        <button class="btn tiny secondary" data-v="right">Stop use, isolate area/equipment, and report</button>
-        <button class="btn tiny secondary" data-v="wrong">Wait for scheduled inspection only</button>
+      <h4>Multiple choices</h4>
+      <div id="m3Quiz">
+        ${multipleChoiceQuestions.map(q=>`<fieldset><legend>${q.question}</legend>${q.choices.map(choice=>`<label><input type="radio" name="${q.id}" value="${choice}">${choice}</label>`).join('')}<p class="feedback" id="${q.id}fb"></p></fieldset>`).join('')}
       </div>
-      <p class="feedback" id="hazActionFb"></p>
+      <button class="btn" id="m3CheckAnswers">Check answers</button>
+      <p class="feedback" id="m3QuizFb"></p>
 
-      <div class="recap hidden" id="hazRecap">Next action sequence: stop work, prevent use, isolate or cordon if needed, notify supervisor/maintenance, and record what/where/when.</div>
       <section class="photo-gallery-wrap"><h4>Photo-based hazard recognition</h4><p class="muted">Use these site photos to practise spotting electrical risk indicators.</p><div class="photo-gallery" id="hazardPhotos"></div></section>`;
 
-    const selectedHazards = new Set();
-    let actionCorrect = false;
+    t.querySelector('#m3CheckAnswers').onclick=()=>{
+      let correct = 0;
+      let allAnswered = true;
 
-    function updateStatus(){
-      const checklistDone = selectedHazards.size===hazardChecks.length;
-      const msg = checklistDone
-        ? 'All 6 hazards confirmed.'
-        : `Selected ${selectedHazards.size}/6 hazards.`;
-      t.querySelector('#hazChecklistFb').textContent = msg;
+      multipleChoiceQuestions.forEach(q=>{
+        const selected = t.querySelector(`input[name="${q.id}"]:checked`)?.value;
+        const fb = t.querySelector(`#${q.id}fb`);
+        if(!selected){
+          allAnswered = false;
+          fb.textContent = 'Select an answer.';
+          return;
+        }
+        if(selected === q.answer){
+          correct += 1;
+          fb.textContent = 'Correct.';
+        } else {
+          fb.textContent = `Not correct. Correct answer: ${q.answer}.`;
+        }
+      });
 
-      if(checklistDone && actionCorrect){
-        t.querySelector('#hazRecap').classList.remove('hidden');
-        setDone('m3_hazard', true);
+      if(!allAnswered){
+        t.querySelector('#m3QuizFb').textContent = 'Please answer every question before checking.';
+        return;
       }
-    }
 
-    t.querySelectorAll('#hazardChecklist input[type="checkbox"]').forEach(cb=>{
-      cb.addEventListener('change',()=>{
-        if(cb.checked) selectedHazards.add(cb.value);
-        else selectedHazards.delete(cb.value);
-        updateStatus();
-      });
-    });
-
-    t.querySelectorAll('#hazActionChoices button').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        actionCorrect = btn.dataset.v === 'right';
-        t.querySelectorAll('#hazActionChoices button').forEach(b=>b.classList.remove('primary'));
-        btn.classList.add('primary');
-        t.querySelector('#hazActionFb').textContent = actionCorrect
-          ? 'Correct. Immediate control comes before any continued task work.'
-          : 'Not safe. Immediate isolation and reporting are required.';
-        updateStatus();
-      });
-    });
+      const passed = correct === multipleChoiceQuestions.length;
+      t.querySelector('#m3QuizFb').textContent = passed
+        ? 'Great work. You identified the key hazards and safe first actions.'
+        : `You scored ${correct}/${multipleChoiceQuestions.length}. Review the information section and try again.`;
+      if(passed) setDone('m3_hazard', true);
+    };
 
     const hp = t.querySelector('#hazardPhotos');
     hazardPhotos.forEach(photo=>{
@@ -396,7 +407,6 @@
     });
     hp.querySelectorAll('img').forEach(img=>img.addEventListener('error', ()=>imageFallback(img), { once:true }));
 
-    updateStatus();
   }
 
   function energyPathSvg(state){
