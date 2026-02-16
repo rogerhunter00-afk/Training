@@ -11,8 +11,8 @@ main{padding:1rem;max-width:1100px}.site-footer{padding:1rem;background:#dbe4ff;
 .nav-toggle{display:none;margin:.5rem;background:var(--brand);color:#fff;border:0;padding:.6rem .8rem;border-radius:.4rem}
 .card{background:var(--card);padding:1rem;border-radius:.6rem;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:1rem}
 .inset{background:#f8fafc}.muted,.hint{color:var(--muted)} .alert{border-left:4px solid #f59e0b;padding:.5rem;background:#fffbeb}
-.btn{background:var(--brand);color:#fff;border:0;padding:.6rem .9rem;border-radius:.4rem;cursor:pointer}.btn.secondary{background:#475569}.btn.danger{background:var(--danger)}.btn.tiny{padding:.2rem .5rem;font-size:.85rem}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn{background:var(--brand);color:#fff;border:1px solid transparent;padding:.6rem .9rem;border-radius:.4rem;cursor:pointer;transition:background var(--ease-standard),border-color var(--ease-standard),box-shadow var(--ease-standard),transform 120ms ease}.btn:hover{background:var(--brand-dark);box-shadow:0 8px 14px rgba(11,92,171,.2)}.btn:active{transform:translateY(1px);box-shadow:0 3px 8px rgba(11,92,171,.25)}.btn.secondary{background:#e2e8f0;color:#1f2937;border-color:#cbd5e1}.btn.secondary:hover{background:#cfd8e3;box-shadow:0 6px 10px rgba(71,85,105,.18)}.btn.danger{background:var(--danger)}.btn.danger:hover{background:var(--danger-dark);box-shadow:0 8px 12px rgba(180,35,24,.25)}.btn.tiny{padding:.2rem .5rem;font-size:.85rem}
+.btn:disabled,.btn:disabled:hover,.btn:disabled:active{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;background:#94a3b8;border-color:#94a3b8}
 label{display:block;margin:.45rem 0} input[type=text],input[type=number],textarea{width:100%;padding:.5rem;border:1px solid #cbd5e1;border-radius:.35rem}
 .inline{display:flex;gap:.5rem;align-items:flex-start}
 .nav-buttons{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}.feedback{font-weight:700;color:#1f2937}
@@ -47,6 +47,7 @@ label{display:block;margin:.45rem 0} input[type=text],input[type=number],textare
 .haz-dropzone.found{fill:#16a34a}
 .recap{margin-top:.6rem;padding:.55rem;background:#ecfeff;border-left:4px solid #0891b2}
 .hidden{display:none}
+.modal.hidden{display:grid}
 .callout{margin:.8rem 0;padding:.6rem;background:#fff7ed;border-left:4px solid #f97316}
 .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem}
 .tile{display:flex;gap:.45rem;padding:.5rem;border:1px solid #cbd5e1;border-radius:.45rem;background:#fff}
