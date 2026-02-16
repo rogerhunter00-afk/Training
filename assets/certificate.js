@@ -64,7 +64,7 @@
     const payload = exportData(state, attempt, generatedISO);
 
     main.innerHTML = `<section class="certificate" id="certArea">
-      <h2>Certificate of Completion</h2>
+      <img class="cert-logo" src="assets/als-logo.svg" alt="Aberdeen Laundry Services logo"><h2>Certificate of Completion</h2>
       <p class="cert-pass">PASS</p>
       <p>This certifies that <strong>${state.learner.name}</strong> has completed:</p>
       <h3>${COURSE_TITLE}</h3>
