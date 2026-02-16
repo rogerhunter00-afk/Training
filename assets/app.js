@@ -193,7 +193,6 @@
     document.title = `${pageTitle} | ${COURSE_TITLE}`;
     const app = document.querySelector('#app');
     app.insertAdjacentHTML('afterbegin', `
-      <a class="skip-link" href="#mainContent">Skip to main content</a>
       <header class="topbar">
         <div>
           <h1>${COURSE_TITLE}</h1>
