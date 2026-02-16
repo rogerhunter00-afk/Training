@@ -1,5 +1,5 @@
 (function(){
-  const { initLayout, loadState, updateState, uuid } = window.ALSApp;
+  const { initLayout, loadState, updateState, uuid, showToast } = window.ALSApp;
   const main = initLayout('Final Assessment');
   if(!loadState().learner.name){ location.href='index.html'; }
 
