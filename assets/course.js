@@ -297,15 +297,14 @@
   }
 
   function module3(el){
-    const hazards=[
-      {id:'h1', name:'Damaged cable sheath', x:120, y:130},
-      {id:'h2', name:'Wet floor near socket', x:250, y:155},
-      {id:'h3', name:'Overloaded plug strip', x:340, y:150},
-      {id:'h4', name:'Open panel cover', x:450, y:85},
-      {id:'h5', name:'Extension lead coiled + warm', x:185, y:180},
-      {id:'h6', name:'Loose plug with discoloration', x:290, y:120}
+    const hazardChecks = [
+      { id:'h1', name:'Damaged cable sheath', why:'Exposed conductors and insulation damage can lead to electric shock or short-circuit faults.' },
+      { id:'h2', name:'Wet floor near socket', why:'Water lowers resistance and increases shock risk near live equipment.' },
+      { id:'h3', name:'Overloaded plug strip', why:'Overload causes overheating, damaged insulation, and possible fire.' },
+      { id:'h4', name:'Open panel cover', why:'Open electrical enclosures can expose live parts and defeat barriers.' },
+      { id:'h5', name:'Extension lead coiled + warm', why:'Coiled cables can overheat under load and damage insulation.' },
+      { id:'h6', name:'Loose plug with discoloration', why:'Heat marks and poor contact indicate arcing and imminent failure.' }
     ];
-    const found = new Set();
     const hazardPhotos = [
       { src:'assets/training-images/co2-extinguisher-outdoor.jpg', alt:'CO2 extinguisher with horn and hose', caption:'Correct extinguisher type for electrical fire response.' },
       { src:'assets/training-images/co2-extinguisher-wall.jpg', alt:'Wall mounted CO2 extinguisher under sign', caption:'Check clear access and correct signage.' },
@@ -317,81 +316,87 @@
       { src:'assets/training-images/high-voltage-warning-sign.jpg', alt:'Danger of death high voltage warning sign', caption:'Warning signs are controls; do not bypass barriers.' },
       { src:'assets/training-images/high-voltage-triangle.jpg', alt:'Yellow high-voltage hazard triangle symbol', caption:'Recognise the symbol and stop before entry.' }
     ];
-    const placements = {};
 
-    el.innerHTML = conceptPanel({title:'Hazard Heatmap', visual:`<svg viewBox="0 0 620 260" role="img" aria-label="Workshop hazard scene">
-      <rect x="10" y="10" width="600" height="240" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-      <rect x="40" y="70" width="180" height="90" fill="#d1fae5"/><rect x="230" y="60" width="130" height="110" fill="#e5e7eb"/><rect x="390" y="45" width="160" height="120" fill="#e2e8f0"/>
-      <circle cx="250" cy="175" r="30" fill="#bfdbfe" opacity="0.65"/>
-      ${hazards.map(h=>`<circle class="haz-dropzone" id="dot-${h.id}" cx="${h.x}" cy="${h.y}" r="12" fill="#ef4444" data-id="${h.id}" tabindex="0" role="button" aria-label="Drop zone for ${h.name}"/>`).join('')}
-      <text x="25" y="240" font-size="12">Drag each hazard label onto the matching red marker.</text></svg>`, explanation:'Find visible warning signs before any electrical task starts.', terms:['Identify and quarantine unsafe equipment.', 'Report defects with clear location details.', 'Never continue work around active hazards.'], tryId:'m3try'});
+    el.innerHTML = conceptPanel({
+      title:'Hazard Spotting Drill',
+      visual:`<svg viewBox="0 0 620 260" role="img" aria-label="Workshop hazard scene overview">
+        <rect x="10" y="10" width="600" height="240" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+        <rect x="40" y="70" width="180" height="90" fill="#d1fae5"/>
+        <rect x="230" y="60" width="130" height="110" fill="#e5e7eb"/>
+        <rect x="390" y="45" width="160" height="120" fill="#e2e8f0"/>
+        <circle cx="120" cy="130" r="9" fill="#ef4444"/><circle cx="250" cy="155" r="9" fill="#ef4444"/><circle cx="340" cy="150" r="9" fill="#ef4444"/>
+        <circle cx="450" cy="85" r="9" fill="#ef4444"/><circle cx="185" cy="180" r="9" fill="#ef4444"/><circle cx="290" cy="120" r="9" fill="#ef4444"/>
+        <text x="25" y="240" font-size="12">Review the six marked hazard points, then complete the checks below.</text>
+      </svg>`,
+      explanation:'Module 3 now uses a simple verification workflow: confirm each hazard and choose the immediate control action.',
+      terms:['Identify defects before work starts.', 'Remove, isolate, or stop use of unsafe items.', 'Report clearly with exact location and condition.'],
+      tryId:'m3try'
+    });
+
     const t=el.querySelector('#m3try');
-    t.innerHTML += `<div class="drag-hazards" id="hazardList"></div><p class="feedback" id="hazFb"></p><p class="recap hidden" id="hazRecap">Next action: quarantine affected equipment, prevent use, report to supervisor/maintenance, and record defect details.</p>
-      <section class="photo-gallery-wrap"><h4>Photo-based hazard recognition</h4><p class="muted">Use these site photos to practise spotting electrical risk indicators.</p><div class="photo-gallery" id="hazardPhotos"></div></section>`;
-    const hl=t.querySelector('#hazardList');
-    hazards.forEach((h,i)=>hl.insertAdjacentHTML('beforeend',`<button class="btn tiny secondary hazard-token" draggable="true" data-id="${h.id}" aria-label="Hazard ${i+1}: ${h.name}">Hazard ${i+1}: ${h.name}</button>`));
+    t.innerHTML = `
+      <h4>Step 1: Confirm each hazard</h4>
+      <p class="muted">Tick all six hazards shown in the scene.</p>
+      <div class="drag-hazards" id="hazardChecklist">
+        ${hazardChecks.map((h,i)=>`<label class="tile"><input type="checkbox" value="${h.id}">Hazard ${i+1}: ${h.name}</label>`).join('')}
+      </div>
+      <p class="feedback" id="hazChecklistFb"></p>
 
-    function updateProgress(){
-      const complete = found.size===hazards.length;
-      t.querySelector('#hazFb').textContent = `Found ${found.size}/${hazards.length} hazards.` + (complete ? ' Great spotting. Why this matters: early identification prevents escalation. Common mistake: only checking obvious damage.' : '');
-      if(complete){
+      <h4>Step 2: Choose the first safe action</h4>
+      <p class="muted">When a defect is found on live equipment, what should happen first?</p>
+      <div class="choice-row" id="hazActionChoices">
+        <button class="btn tiny secondary" data-v="wrong">Keep using it and monitor</button>
+        <button class="btn tiny secondary" data-v="right">Stop use, isolate area/equipment, and report</button>
+        <button class="btn tiny secondary" data-v="wrong">Wait for scheduled inspection only</button>
+      </div>
+      <p class="feedback" id="hazActionFb"></p>
+
+      <div class="recap hidden" id="hazRecap">Next action sequence: stop work, prevent use, isolate or cordon if needed, notify supervisor/maintenance, and record what/where/when.</div>
+      <section class="photo-gallery-wrap"><h4>Photo-based hazard recognition</h4><p class="muted">Use these site photos to practise spotting electrical risk indicators.</p><div class="photo-gallery" id="hazardPhotos"></div></section>`;
+
+    const selectedHazards = new Set();
+    let actionCorrect = false;
+
+    function updateStatus(){
+      const checklistDone = selectedHazards.size===hazardChecks.length;
+      const msg = checklistDone
+        ? 'All 6 hazards confirmed.'
+        : `Selected ${selectedHazards.size}/6 hazards.`;
+      t.querySelector('#hazChecklistFb').textContent = msg;
+
+      if(checklistDone && actionCorrect){
         t.querySelector('#hazRecap').classList.remove('hidden');
         setDone('m3_hazard', true);
       }
     }
 
-    function placeHazard(hazardId, dropId){
-      const token = hl.querySelector(`[data-id="${hazardId}"]`);
-      const zone = el.querySelector(`#dot-${dropId}`);
-      if(!token || !zone || token.disabled) return;
-      if(hazardId !== dropId){
-        t.querySelector('#hazFb').textContent = 'Not quite. Match each label to the correct location before continuing.';
-        return;
-      }
-      placements[hazardId] = dropId;
-      found.add(hazardId);
-      token.disabled = true;
-      token.classList.add('placed');
-      token.setAttribute('aria-grabbed','false');
-      zone.classList.add('found');
-      zone.setAttribute('aria-label', `Placed: ${token.textContent}`);
-      updateProgress();
-    }
-
-    hl.querySelectorAll('.hazard-token').forEach(token=>{
-      token.addEventListener('dragstart',e=>{
-        e.dataTransfer.setData('text/plain', token.dataset.id);
-        token.setAttribute('aria-grabbed','true');
-      });
-      token.addEventListener('dragend',()=>token.setAttribute('aria-grabbed','false'));
-    });
-
-    el.querySelectorAll('.haz-dropzone').forEach(zone=>{
-      zone.addEventListener('dragover',e=>e.preventDefault());
-      zone.addEventListener('drop',e=>{
-        e.preventDefault();
-        const hazardId = e.dataTransfer.getData('text/plain');
-        placeHazard(hazardId, zone.dataset.id);
-      });
-      zone.addEventListener('click',()=>{
-        const firstRemaining = hazards.find(h=>!placements[h.id]);
-        if(firstRemaining) placeHazard(firstRemaining.id, zone.dataset.id);
-      });
-      zone.addEventListener('keydown',e=>{
-        if(e.key==='Enter' || e.key===' '){
-          e.preventDefault();
-          const firstRemaining = hazards.find(h=>!placements[h.id]);
-          if(firstRemaining) placeHazard(firstRemaining.id, zone.dataset.id);
-        }
+    t.querySelectorAll('#hazardChecklist input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change',()=>{
+        if(cb.checked) selectedHazards.add(cb.value);
+        else selectedHazards.delete(cb.value);
+        updateStatus();
       });
     });
-    updateProgress();
+
+    t.querySelectorAll('#hazActionChoices button').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        actionCorrect = btn.dataset.v === 'right';
+        t.querySelectorAll('#hazActionChoices button').forEach(b=>b.classList.remove('primary'));
+        btn.classList.add('primary');
+        t.querySelector('#hazActionFb').textContent = actionCorrect
+          ? 'Correct. Immediate control comes before any continued task work.'
+          : 'Not safe. Immediate isolation and reporting are required.';
+        updateStatus();
+      });
+    });
 
     const hp = t.querySelector('#hazardPhotos');
     hazardPhotos.forEach(photo=>{
       hp.insertAdjacentHTML('beforeend', `<figure class="photo-card"><img src="${photo.src}" alt="${photo.alt}" loading="lazy"><figcaption>${photo.caption}</figcaption></figure>`);
     });
     hp.querySelectorAll('img').forEach(img=>img.addEventListener('error', ()=>imageFallback(img), { once:true }));
+
+    updateStatus();
   }
 
   function energyPathSvg(state){
