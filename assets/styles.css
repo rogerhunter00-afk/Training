@@ -4,7 +4,7 @@ a{color:var(--brand)}
 .topbar{display:flex;justify-content:space-between;gap:1rem;padding:1rem;background:linear-gradient(90deg,var(--brand-ink),var(--brand));color:#fff;align-items:center;flex-wrap:wrap;border-bottom:4px solid #fff}
 .subline{margin:0;color:#dbe4ff}.topbar h1{font-size:1.1rem;margin:.1rem 0}
 .top-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;justify-content:flex-end}
-.brand-corner-logo{width:170px;max-width:42vw;height:auto;background:#fff;border-radius:.4rem;padding:.2rem}
+.brand-corner-logo{width:230px;max-width:52vw;height:auto}
 .layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 150px)}
 .sidebar{background:var(--brand);color:#fff;padding:1rem}.sidebar ul{list-style:none;padding:0;margin:0}.sidebar li{margin:.4rem 0}.sidebar a{color:#e5e7eb;text-decoration:none}
 main{padding:1rem;max-width:1100px}.site-footer{padding:1rem;background:#dbe4ff;font-size:.9rem;color:#0b1f70;border-top:2px solid #b7c8ff}
@@ -20,7 +20,7 @@ label{display:block;margin:.45rem 0} input[type=text],input[type=number],textare
 .order-row{display:flex;justify-content:space-between;border:1px solid #d1d5db;padding:.45rem;margin:.35rem 0;border-radius:.35rem;background:#fff}
 .table-wrap{overflow:auto} table{width:100%;border-collapse:collapse;background:#fff}th,td{border:1px solid #d1d5db;padding:.45rem;text-align:left}
 .certificate{text-align:center;border:3px double var(--brand);padding:1.4rem;background:#fff}.cert-pass{font-size:2rem;color:#15803d;margin:.3rem 0}
-.cert-logo{display:block;width:220px;max-width:80%;height:auto;margin:0 auto .55rem;background:#fff;border-radius:.4rem;padding:.25rem;border:1px solid #b7c8ff}
+.cert-logo{display:block;width:300px;max-width:80%;height:auto;margin:0 auto .55rem}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:1rem}.modal.hidden{display:none}.modal-card{background:#fff;padding:1rem;border-radius:.5rem;max-width:560px;width:100%}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 @media (max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}.sidebar.open{display:block}.nav-toggle{display:block}}
