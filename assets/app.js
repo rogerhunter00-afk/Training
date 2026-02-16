@@ -35,7 +35,7 @@
         startedAtISO: '',
         completedAtISO: ''
       },
-      quiz: { attempts: [], bestAttemptId: '' },
+      quiz: { attempts: [], bestAttemptId: '', currentAttempt: { attemptId: '', startedAtISO: '', answers: {} } },
       practicalSignoff: { required: false, records: [] }
     };
   }
@@ -49,8 +49,10 @@
       ? moduleTitles.map((_, i) => Boolean(next.course.moduleCompletion[i]))
       : new Array(moduleTitles.length).fill(false);
     next.course.moduleInteractions = next.course.moduleInteractions || {};
-    next.quiz = { attempts: [], bestAttemptId: '', ...(incoming?.quiz || {}) };
+    next.quiz = { attempts: [], bestAttemptId: '', currentAttempt: { attemptId: '', startedAtISO: '', answers: {} }, ...(incoming?.quiz || {}) };
     next.quiz.attempts = Array.isArray(next.quiz.attempts) ? next.quiz.attempts : [];
+    next.quiz.currentAttempt = { attemptId: '', startedAtISO: '', answers: {}, ...(next.quiz.currentAttempt || {}) };
+    next.quiz.currentAttempt.answers = next.quiz.currentAttempt.answers && typeof next.quiz.currentAttempt.answers === 'object' ? next.quiz.currentAttempt.answers : {};
     next.practicalSignoff = {
       required: Boolean(incoming?.practicalSignoff?.required || next.settings.requirePracticalSignoffForCertificate),
       records: Array.isArray(incoming?.practicalSignoff?.records) ? incoming.practicalSignoff.records : []
@@ -111,6 +113,32 @@
     return (state.practicalSignoff.records || []).filter(r=>r.result==='pass').sort((a,b)=>new Date(b.signedAtISO)-new Date(a.signedAtISO))[0] || null;
   }
 
+
+  function getCourseDashboard(state){
+    const completion = Array.isArray(state?.course?.moduleCompletion)
+      ? moduleTitles.map((_, i) => Boolean(state.course.moduleCompletion[i]))
+      : new Array(moduleTitles.length).fill(false);
+    const totalModules = moduleTitles.length;
+    const completedCount = completion.filter(Boolean).length;
+    const quizReady = totalModules > 0 && completedCount === totalModules;
+    const currentModuleIndex = Math.min(Math.max(Number(state?.course?.currentModuleIndex || 0), 0), totalModules - 1);
+    const currentModuleTitle = moduleTitles[currentModuleIndex] || moduleTitles[0] || 'Module';
+    const nextIncompleteIndex = completion.findIndex(done => !done);
+    const continueIndex = nextIncompleteIndex === -1 ? currentModuleIndex : nextIncompleteIndex;
+    const progressPercent = totalModules ? Math.round((completedCount / totalModules) * 100) : 0;
+
+    return {
+      totalModules,
+      completedCount,
+      quizReady,
+      currentModuleIndex,
+      currentModuleTitle,
+      progressPercent,
+      primaryLabel: quizReady ? 'Start Final Assessment' : `Continue Module ${continueIndex + 1}`,
+      primaryHref: quizReady ? 'quiz.html' : 'course.html'
+    };
+  }
+
   function imageFallback(img){
     const label = img.getAttribute('alt') || 'Training image unavailable';
     const text = encodeURIComponent(label);
@@ -147,6 +175,7 @@
           <p class="subline">Estimated duration: 35–55 minutes</p>
         </div>
         <div class="top-actions">
+          <img class="brand-corner-logo" src="assets/als-logo.svg" alt="Aberdeen Laundry Services logo">
           <p aria-live="polite">Learner: <strong id="learnerDisplay">${state.learner.name || 'Not set'}</strong></p>
           <button id="settingsBtn" class="btn secondary">Settings</button>
         </div>
@@ -302,6 +331,7 @@
     initLayout,
     imageFallback,
     getBestAttempt,
-    getLatestPassSignoff
+    getLatestPassSignoff,
+    getCourseDashboard
   };
 })();
