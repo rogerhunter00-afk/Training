@@ -193,6 +193,7 @@
     document.title = `${pageTitle} | ${COURSE_TITLE}`;
     const app = document.querySelector('#app');
     app.insertAdjacentHTML('afterbegin', `
+      <a class="skip-link" href="#mainContent">Skip to main content</a>
       <header class="topbar">
         <div>
           <h1>${COURSE_TITLE}</h1>
@@ -238,45 +239,84 @@
 
     const navToggle = app.querySelector('.nav-toggle');
     const sidebar = app.querySelector('#sidebarNav');
+    const firstNavLink = sidebar?.querySelector('a');
+    const openMenu = ()=>{
+      navToggle?.setAttribute('aria-expanded', 'true');
+      sidebar?.classList.add('open');
+      firstNavLink?.focus();
+    };
+    const closeMenu = ()=>{
+      navToggle?.setAttribute('aria-expanded', 'false');
+      sidebar?.classList.remove('open');
+    };
+
     navToggle?.addEventListener('click', ()=>{
       const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-      navToggle.setAttribute('aria-expanded', String(!expanded));
-      sidebar.classList.toggle('open');
+      if(expanded) closeMenu();
+      else openMenu();
+    });
+
+    document.addEventListener('click', (event)=>{
+      if(!sidebar?.classList.contains('open')) return;
+      if(sidebar.contains(event.target) || navToggle?.contains(event.target)) return;
+      closeMenu();
+    });
+
+    document.addEventListener('keydown', (event)=>{
+      if(event.key==='Escape' && sidebar?.classList.contains('open')){
+        closeMenu();
+        navToggle?.focus();
+      }
     });
 
     const settingsModal = app.querySelector('#settingsModal');
-    const resetConfirmModal = app.querySelector('#resetConfirmModal');
-    let lastFocusedEl = null;
+    const settingsBtn = app.querySelector('#settingsBtn');
+    const closeSettingsBtn = app.querySelector('#closeSettings');
+    let lastFocusedBeforeModal = null;
 
-    const getFocusable = (modal)=>[...modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled);
-    const openModal = (modal)=>{
-      lastFocusedEl = document.activeElement;
-      modal.classList.remove('hidden');
-      getFocusable(modal)[0]?.focus();
-    };
-    const closeModal = (modal)=>{
-      modal.classList.add('hidden');
-      lastFocusedEl?.focus();
-    };
-    const trapTab = (evt, modal)=>{
-      if(evt.key !== 'Tab') return;
-      const focusable = getFocusable(modal);
-      if(!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if(evt.shiftKey && document.activeElement === first){ evt.preventDefault(); last.focus(); }
-      if(!evt.shiftKey && document.activeElement === last){ evt.preventDefault(); first.focus(); }
-    };
+    function openModal(){
+      if(!settingsModal) return;
+      lastFocusedBeforeModal = document.activeElement;
+      settingsModal.classList.remove('hidden');
+      const firstFocusable = settingsModal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      firstFocusable?.focus();
+    }
 
-    [settingsModal, resetConfirmModal].forEach((modal)=>{
-      modal?.addEventListener('keydown', (evt)=>{
-        if(evt.key === 'Escape') closeModal(modal);
-        trapTab(evt, modal);
-      });
+    function closeModal(){
+      if(!settingsModal) return;
+      settingsModal.classList.add('hidden');
+      const focusTarget = lastFocusedBeforeModal instanceof HTMLElement ? lastFocusedBeforeModal : settingsBtn;
+      focusTarget?.focus();
+    }
+
+    settingsBtn?.addEventListener('click', openModal);
+    closeSettingsBtn?.addEventListener('click', closeModal);
+
+    settingsModal?.addEventListener('click', (event)=>{
+      if(event.target === settingsModal) closeModal();
     });
 
-    app.querySelector('#settingsBtn')?.addEventListener('click',()=>openModal(settingsModal));
-    app.querySelector('#closeSettings')?.addEventListener('click',()=>closeModal(settingsModal));
+    settingsModal?.addEventListener('keydown', (event)=>{
+      if(event.key==='Escape'){
+        closeModal();
+        return;
+      }
+      if(event.key!=='Tab') return;
+
+      const focusables = settingsModal.querySelectorAll('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      const visible = [...focusables].filter(el=>!el.disabled && el.offsetParent !== null);
+      if(!visible.length) return;
+
+      const first = visible[0];
+      const last = visible[visible.length-1];
+      if(event.shiftKey && document.activeElement === first){
+        event.preventDefault();
+        last.focus();
+      } else if(!event.shiftKey && document.activeElement === last){
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     app.querySelector('#settingsForm')?.addEventListener('submit',(e)=>{
       e.preventDefault();
@@ -293,8 +333,7 @@
         s.settings.showTrainingMatrixPage = fd.get('showTrainingMatrixPage') === 'on';
       });
       document.querySelector('#learnerDisplay').textContent = learnerName;
-      closeModal(settingsModal);
-      showToast('Settings saved.');
+      closeModal();
     });
 
     app.querySelector('#resetProgress')?.addEventListener('click',()=>{
