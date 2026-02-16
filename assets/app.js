@@ -269,53 +269,62 @@
     });
 
     const settingsModal = app.querySelector('#settingsModal');
+    const resetConfirmModal = app.querySelector('#resetConfirmModal');
     const settingsBtn = app.querySelector('#settingsBtn');
     const closeSettingsBtn = app.querySelector('#closeSettings');
-    let lastFocusedBeforeModal = null;
+    const modalFocusOrigin = new WeakMap();
 
-    function openModal(){
-      if(!settingsModal) return;
-      lastFocusedBeforeModal = document.activeElement;
-      settingsModal.classList.remove('hidden');
-      const firstFocusable = settingsModal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+    function openModal(modal = settingsModal){
+      if(!modal) return;
+      if(document.activeElement instanceof HTMLElement){
+        modalFocusOrigin.set(modal, document.activeElement);
+      }
+      modal.classList.remove('hidden');
+      const firstFocusable = modal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
       firstFocusable?.focus();
     }
 
-    function closeModal(){
-      if(!settingsModal) return;
-      settingsModal.classList.add('hidden');
-      const focusTarget = lastFocusedBeforeModal instanceof HTMLElement ? lastFocusedBeforeModal : settingsBtn;
+    function closeModal(modal = settingsModal){
+      if(!modal) return;
+      modal.classList.add('hidden');
+      const focusTarget = modalFocusOrigin.get(modal) || settingsBtn;
       focusTarget?.focus();
     }
 
     settingsBtn?.addEventListener('click', openModal);
     closeSettingsBtn?.addEventListener('click', closeModal);
 
-    settingsModal?.addEventListener('click', (event)=>{
-      if(event.target === settingsModal) closeModal();
-    });
+    function bindModalInteractions(modal){
+      if(!modal) return;
+      modal.addEventListener('click', (event)=>{
+        if(event.target === modal) closeModal(modal);
+      });
 
-    settingsModal?.addEventListener('keydown', (event)=>{
-      if(event.key==='Escape'){
-        closeModal();
-        return;
-      }
-      if(event.key!=='Tab') return;
+      modal.addEventListener('keydown', (event)=>{
+        if(event.key==='Escape'){
+          closeModal(modal);
+          return;
+        }
+        if(event.key!=='Tab') return;
 
-      const focusables = settingsModal.querySelectorAll('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
-      const visible = [...focusables].filter(el=>!el.disabled && el.offsetParent !== null);
-      if(!visible.length) return;
+        const focusables = modal.querySelectorAll('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+        const visible = [...focusables].filter(el=>!el.disabled && el.offsetParent !== null);
+        if(!visible.length) return;
 
-      const first = visible[0];
-      const last = visible[visible.length-1];
-      if(event.shiftKey && document.activeElement === first){
-        event.preventDefault();
-        last.focus();
-      } else if(!event.shiftKey && document.activeElement === last){
-        event.preventDefault();
-        first.focus();
-      }
-    });
+        const first = visible[0];
+        const last = visible[visible.length-1];
+        if(event.shiftKey && document.activeElement === first){
+          event.preventDefault();
+          last.focus();
+        } else if(!event.shiftKey && document.activeElement === last){
+          event.preventDefault();
+          first.focus();
+        }
+      });
+    }
+
+    bindModalInteractions(settingsModal);
+    bindModalInteractions(resetConfirmModal);
 
     app.querySelector('#settingsForm')?.addEventListener('submit',(e)=>{
       e.preventDefault();
