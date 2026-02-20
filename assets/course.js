@@ -427,10 +427,19 @@
 
   function module4(el){
     const order=['Identify','Shut down','Isolate','Lock off + tag','Prove dead','Re-check'];
+    const orderExplanation=[
+      '1. Identify — confirm the exact equipment, all energy sources, and everyone affected before touching controls.',
+      '2. Shut down — stop the machine with its normal controls so moving parts and processes are brought to a controlled stop.',
+      '3. Isolate — operate the isolator to create a physical electrical separation from the supply.',
+      '4. Lock off + tag — secure the isolator with your lock and warning tag so no one can re-energise it accidentally.',
+      '5. Prove dead — complete prove-test-prove with a suitable two-pole indicator and proving unit.',
+      '6. Re-check — confirm isolation is still effective and the work area remains safe before starting the task.'
+    ];
     let items=['Isolate','Identify','Prove dead','Re-check','Shut down','Lock off + tag'];
+    let sequenceAttempts = 0;
     el.innerHTML = conceptPanel({title:'Safe Isolation Energy Path', visual:`<div id="energyVisual">${energyPathSvg([])}</div>`, explanation:'Isolation is a physical break in the energy path, secured by lock-off and verified by prove-test-prove.', terms:['One person, one lock, own key retained.', 'Prohibition tag required.', 'Never remove another person’s lock.'], tryId:'m4try'}) + `<div class="callout">Common mistakes: relying on labels only; taping over breakers; removing others’ locks.</div>`;
     const t=el.querySelector('#m4try');
-    t.innerHTML += `<fieldset><legend>Sequence Builder</legend><p class="muted">Reorder the steps into the safe isolation sequence.</p><div id="seq" role="group" aria-label="Safe isolation order controls"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p></fieldset>
+    t.innerHTML += `<fieldset><legend>Sequence Builder</legend><p class="muted">Reorder the steps into the safe isolation sequence. After 3 incorrect checks, the full sequence explanation will be shown.</p><div id="seq" role="group" aria-label="Safe isolation order controls"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p></fieldset>
       <fieldset><legend>Tester check</legend><p>Pick the suitable tester for prove-dead process:</p>
       <div class="choice-row" id="testerPick" role="group" aria-label="Tester selection options"><button class="btn tiny secondary" data-v="wrong">Non-contact pen only</button><button class="btn tiny secondary" data-v="right">Two-pole voltage indicator with proving unit</button><button class="btn tiny secondary" data-v="wrong">Improvised lamp/test screwdriver</button></div><p class="feedback" id="testerFb"></p></fieldset>`;
 
@@ -448,7 +457,16 @@
     let testerRight = false;
     el.querySelector('#validateOrder').onclick=()=>{
       const ok=items.join('|')===order.join('|');
-      el.querySelector('#seqFb').textContent = ok ? 'Correct sequence. Why this matters: sequence failures can leave hidden live energy. Common mistake: proving dead before lock-off.' : 'Sequence is incorrect. Keep adjusting and observe visual changes.';
+      const fb = el.querySelector('#seqFb');
+      if(ok){
+        sequenceAttempts = 0;
+        fb.textContent = 'Correct sequence. Why this matters: sequence failures can leave hidden live energy. Common mistake: proving dead before lock-off.';
+      } else {
+        sequenceAttempts += 1;
+        fb.textContent = sequenceAttempts >= 3
+          ? `Sequence is incorrect. Full order explained:\n${orderExplanation.join('\n')}`
+          : `Sequence is incorrect. Keep adjusting and observe visual changes. Attempt ${sequenceAttempts}/3 before full explanation.`;
+      }
       if(ok && testerRight) setDone('m4_order',true);
     };
     el.querySelectorAll('#testerPick button').forEach(b=>b.onclick=()=>{
