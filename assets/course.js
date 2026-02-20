@@ -59,7 +59,10 @@
       </article>`;
     mod.content(main.querySelector('#moduleContent'));
 
-    main.querySelector('#prevBtn').onclick = ()=> updateState(s=>{ s.course.currentModuleIndex=Math.max(0,idx-1); });
+    main.querySelector('#prevBtn').onclick = ()=>{
+      updateState(s=>{ s.course.currentModuleIndex=Math.max(0,idx-1); });
+      render();
+    };
     main.querySelector('#nextBtn').onclick = ()=>{
       updateState(s=>{
         s.course.moduleCompletion[idx]=true;
