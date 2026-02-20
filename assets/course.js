@@ -441,7 +441,7 @@
     const t=el.querySelector('#m4try');
     t.innerHTML += `<fieldset><legend>Sequence Builder</legend><p class="muted">Reorder the steps into the safe isolation sequence. After 3 incorrect checks, the full sequence explanation will be shown.</p><div id="seq" role="group" aria-label="Safe isolation order controls"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p></fieldset>
       <fieldset><legend>Tester check</legend><p>Pick the suitable tester for prove-dead process:</p>
-      <div class="choice-row" id="testerPick" role="group" aria-label="Tester selection options"><button class="btn tiny secondary" data-v="wrong">Non-contact pen only</button><button class="btn tiny secondary" data-v="right">Two-pole voltage indicator with proving unit</button><button class="btn tiny secondary" data-v="wrong">Improvised lamp/test screwdriver</button></div><p class="feedback" id="testerFb"></p></fieldset>`;
+      <div class="choice-row" id="testerPick" role="group" aria-label="Tester selection options"><button class="btn tiny secondary" data-v="wrong" data-tip="Not suitable on its own: non-contact pens can give false positives/negatives and cannot prove dead conductors.">Non-contact pen only</button><button class="btn tiny secondary" data-v="right" data-tip="Correct choice: a GS38-compliant two-pole indicator with a proving unit supports a reliable prove-test-prove process.">Two-pole voltage indicator with proving unit</button><button class="btn tiny secondary" data-v="wrong" data-tip="Unsafe and unreliable: improvised lamps/test screwdrivers are not approved instruments for proving dead.">Improvised lamp/test screwdriver</button></div><p class="feedback" id="testerFb"></p></fieldset>`;
 
     const renderSeq=()=>{
       const seq=el.querySelector('#seq'); seq.innerHTML='';
@@ -469,10 +469,14 @@
       }
       if(ok && testerRight) setDone('m4_order',true);
     };
-    el.querySelectorAll('#testerPick button').forEach(b=>b.onclick=()=>{
+    el.querySelectorAll('#testerPick button').forEach(b=>{
+      b.title = b.dataset.tip;
+      b.setAttribute('aria-label', `${b.textContent.trim()}. ${b.dataset.tip}`);
+      b.onclick=()=>{
       testerRight = b.dataset.v==='right';
       el.querySelector('#testerFb').textContent = testerRight ? 'Correct: use a suitable two-pole indicator and prove before and after testing the circuit.' : 'Not suitable. You need a reliable tester and a prove-test-prove method.';
       if(testerRight && items.join('|')===order.join('|')) setDone('m4_order',true);
+      };
     });
   }
 
