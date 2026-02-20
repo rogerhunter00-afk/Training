@@ -430,7 +430,19 @@
     let items=['Isolate','Identify','Prove dead','Re-check','Shut down','Lock off + tag'];
     el.innerHTML = conceptPanel({title:'Safe Isolation Energy Path', visual:`<div id="energyVisual">${energyPathSvg([])}</div>`, explanation:'Isolation is a physical break in the energy path, secured by lock-off and verified by prove-test-prove.', terms:['One person, one lock, own key retained.', 'Prohibition tag required.', 'Never remove another person’s lock.'], tryId:'m4try'}) + `<div class="callout">Common mistakes: relying on labels only; taping over breakers; removing others’ locks.</div>`;
     const t=el.querySelector('#m4try');
-    t.innerHTML += `<fieldset><legend>Sequence Builder</legend><p class="muted">Reorder the steps into the safe isolation sequence.</p><div id="seq" role="group" aria-label="Safe isolation order controls"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p></fieldset>
+    t.innerHTML += `<section class="info-card"><h4>Full Lock Out Tag Out process (LOTO)</h4>
+      <ol>
+        <li><strong>Identify all energy sources:</strong> review drawings, labels, and site information so every electrical, mechanical, hydraulic, pneumatic, or stored-energy source is known before work starts.</li>
+        <li><strong>Shut down correctly:</strong> stop the machine or circuit using normal operating controls so equipment is in a stable condition before isolation.</li>
+        <li><strong>Isolate each source:</strong> operate the correct isolator(s) to create a physical break in the energy path (not just a software stop or local emergency stop).</li>
+        <li><strong>Lock off and tag:</strong> fit your personal padlock and prohibition tag at each isolation point. Keep your key with you. If multiple people are working, use a hasp so each person applies their own lock.</li>
+        <li><strong>Release or control stored energy:</strong> discharge capacitors, bleed pressure, lower suspended loads, and secure moving parts so hidden energy cannot cause movement.</li>
+        <li><strong>Prove dead (prove-test-prove):</strong> prove your tester on a known live source, test the isolated circuit, then re-prove the tester on a known live source.</li>
+        <li><strong>Re-check before touch:</strong> confirm isolation remains secure at point of work, then begin task.</li>
+      </ol>
+      <p class="muted">Only after all steps are complete should work begin. The ordering task below checks your understanding of this sequence.</p>
+    </section>
+    <fieldset><legend>Sequence Builder</legend><p class="muted">Reorder the steps into the safe isolation sequence.</p><div id="seq" role="group" aria-label="Safe isolation order controls"></div><button class="btn" id="validateOrder">Validate order</button><p id="seqFb" class="feedback"></p></fieldset>
       <fieldset><legend>Tester check</legend><p>Pick the suitable tester for prove-dead process:</p>
       <div class="choice-row" id="testerPick" role="group" aria-label="Tester selection options"><button class="btn tiny secondary" data-v="wrong">Non-contact pen only</button><button class="btn tiny secondary" data-v="right">Two-pole voltage indicator with proving unit</button><button class="btn tiny secondary" data-v="wrong">Improvised lamp/test screwdriver</button></div><p class="feedback" id="testerFb"></p></fieldset>`;
 
