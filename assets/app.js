@@ -275,19 +275,21 @@
     const modalFocusOrigin = new WeakMap();
 
     function openModal(modal = settingsModal){
-      if(!modal) return;
+      const targetModal = modal instanceof Event ? settingsModal : modal;
+      if(!targetModal) return;
       if(document.activeElement instanceof HTMLElement){
-        modalFocusOrigin.set(modal, document.activeElement);
+        modalFocusOrigin.set(targetModal, document.activeElement);
       }
-      modal.classList.remove('hidden');
-      const firstFocusable = modal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+      targetModal.classList.remove('hidden');
+      const firstFocusable = targetModal.querySelector('input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
       firstFocusable?.focus();
     }
 
     function closeModal(modal = settingsModal){
-      if(!modal) return;
-      modal.classList.add('hidden');
-      const focusTarget = modalFocusOrigin.get(modal) || settingsBtn;
+      const targetModal = modal instanceof Event ? settingsModal : modal;
+      if(!targetModal) return;
+      targetModal.classList.add('hidden');
+      const focusTarget = modalFocusOrigin.get(targetModal) || settingsBtn;
       focusTarget?.focus();
     }
 
